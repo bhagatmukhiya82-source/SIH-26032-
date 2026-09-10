@@ -34,3 +34,6 @@ Thumbs.db
 
 # Figma make kit caches
 .figma/
+
+upload_to_github.bat
+Upload-To-GitHub.bat
