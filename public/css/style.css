@@ -1,0 +1,930 @@
+/* Custom styles for KISAN-Q Smart Mandi System (e-NAM Edition) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Share+Tech+Mono&family=Tiro+Devanagari+Hindi&family=Mukta+Mahee:wght@400;600;700;800&display=swap');
+
+:root {
+  --primary: #15803d;
+  --primary-dark: #166534;
+  --secondary: #d97706;
+  --accent: #0284c7;
+  --bg-mandi: #f8fafc;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #f1f5f9;
+  color: #1e293b;
+}
+
+.font-hindi {
+  font-family: 'Tiro Devanagari Hindi', 'Inter', sans-serif;
+}
+
+.font-punjabi {
+  font-family: 'Mukta Mahee', 'Inter', sans-serif;
+}
+
+.font-mono-lcd {
+  font-family: 'Share Tech Mono', monospace;
+}
+
+/* Indian Tricolor Bar */
+.tricolor-bar {
+  background: linear-gradient(90deg, #ff9933 33.33%, #ffffff 33.33%, #ffffff 66.66%, #138808 66.66%);
+  height: 4px;
+  width: 100%;
+}
+
+/* Continuous Marquee Animation */
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.animate-marquee {
+  display: inline-block;
+  white-space: nowrap;
+  animation: marquee 28s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Shimmer Button Effect */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer-btn {
+  background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 50%, #f59e0b 100%);
+  background-size: 200% 100%;
+  animation: shimmer 3s infinite linear;
+}
+
+/* Pulse Glow */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
+  50% { box-shadow: 0 0 25px rgba(245, 158, 11, 0.6); }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2.5s infinite ease-in-out;
+}
+
+/* Feature Phone (Nokia / Bharat Phone) Simulator Styling */
+.phone-case {
+  width: 320px;
+  background: linear-gradient(145deg, #1e293b, #0f172a);
+  border-radius: 36px;
+  padding: 24px 18px 28px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.1);
+  border: 4px solid #334155;
+  user-select: none;
+}
+
+.phone-speaker {
+  width: 50px;
+  height: 5px;
+  background-color: #475569;
+  border-radius: 9999px;
+  margin: 0 auto 14px;
+}
+
+.phone-screen {
+  background: #99c286;
+  border-radius: 10px;
+  height: 190px;
+  border: 3px solid #1f2937;
+  box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.4);
+  padding: 10px;
+  color: #132a0c;
+  font-family: 'Share Tech Mono', monospace;
+  position: relative;
+  overflow: hidden;
+}
+
+.phone-screen::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(rgba(153, 194, 134, 0.1) 50%, rgba(0, 0, 0, 0.05) 50%);
+  background-size: 100% 4px;
+  pointer-events: none;
+}
+
+.keypad-btn {
+  background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+  border: 1px solid #475569;
+  border-radius: 12px;
+  color: #f8fafc;
+  font-weight: 700;
+  transition: all 0.1s ease;
+  box-shadow: 0 3px 0 #0f172a;
+}
+
+.keypad-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 #0f172a;
+  background: #0ea5e9;
+}
+
+.call-btn {
+  background: linear-gradient(180deg, #16a34a 0%, #15803d 100%) !important;
+  box-shadow: 0 3px 0 #14532d !important;
+}
+
+.hangup-btn {
+  background: linear-gradient(180deg, #dc2626 0%, #b91c1c 100%) !important;
+  box-shadow: 0 3px 0 #7f1d1d !important;
+}
+
+/* Weighbridge Telemetry Gauges & Cards */
+.wb-active-glow {
+  box-shadow: 0 0 15px rgba(34, 197, 94, 0.35);
+  border-color: #22c55e;
+}
+
+.wb-warning-glow {
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.35);
+  border-color: #f59e0b;
+}
+
+/* Radar Pulse Animation */
+@keyframes radar-sweep {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.radar-sweep-line {
+  animation: radar-sweep 4s linear infinite;
+  transform-origin: bottom right;
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Digital Gate Pass Styling */
+.gate-pass-ticket {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 2px dashed #cbd5e1;
+  position: relative;
+}
+
+.gate-pass-ticket::before,
+.gate-pass-ticket::after {
+  content: '';
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  background-color: #f1f5f9;
+  border-radius: 50%;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.gate-pass-ticket::before { left: -14px; }
+.gate-pass-ticket::after { right: -14px; }
+
+/* ==========================================================================
+   DANGER & EMERGENCY RESILIENCE EFFECTS
+   ========================================================================== */
+
+/* 1. Full-Screen Edge Hazard Strobe Vignette */
+@keyframes danger-strobe {
+  0%, 100% {
+    box-shadow: inset 0 0 70px rgba(220, 38, 38, 0.85), inset 0 0 140px rgba(220, 38, 38, 0.35);
+    background: rgba(220, 38, 38, 0.05);
+  }
+  50% {
+    box-shadow: inset 0 0 25px rgba(220, 38, 38, 0.25);
+    background: transparent;
+  }
+}
+
+.danger-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 99999;
+  animation: danger-strobe 0.9s infinite ease-in-out;
+  display: none;
+}
+
+.danger-overlay.active {
+  display: block;
+}
+
+/* 2. Scrolling Industrial Hazard Warning Stripes */
+@keyframes hazard-scroll {
+  0% { background-position: 0 0; }
+  100% { background-position: 56px 0; }
+}
+
+.hazard-tape-yellow {
+  height: 14px;
+  width: 100%;
+  background: repeating-linear-gradient(
+    -45deg,
+    #facc15,
+    #facc15 14px,
+    #0f172a 14px,
+    #0f172a 28px
+  );
+  background-size: 56px 14px;
+  animation: hazard-scroll 0.8s linear infinite;
+}
+
+.hazard-tape-red {
+  height: 14px;
+  width: 100%;
+  background: repeating-linear-gradient(
+    -45deg,
+    #ef4444,
+    #ef4444 14px,
+    #ffffff 14px,
+    #ffffff 28px
+  );
+  background-size: 56px 14px;
+  animation: hazard-scroll 0.7s linear infinite;
+}
+
+/* 3. Physical Shockwave / Rumble Shake */
+@keyframes danger-shake {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  10%, 30%, 50%, 70%, 90% { transform: translate(-5px, -3px) rotate(-0.8deg); }
+  20%, 40%, 60%, 80% { transform: translate(5px, 3px) rotate(0.8deg); }
+}
+
+.danger-shake {
+  animation: danger-shake 0.5s ease-in-out;
+}
+
+/* 4. Rotating Emergency Beacon & Siren */
+@keyframes beacon-flash {
+  0%, 100% {
+    filter: drop-shadow(0 0 15px rgba(239, 68, 68, 0.95));
+    transform: scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 35px rgba(245, 158, 11, 1));
+    transform: scale(1.12);
+  }
+}
+
+.danger-beacon {
+  animation: beacon-flash 0.6s infinite ease-in-out;
+}
+
+/* 5. High-Contrast Crisis Border Glow */
+@keyframes danger-border-glow {
+  0%, 100% {
+    border-color: #dc2626;
+    box-shadow: 0 0 35px rgba(220, 38, 38, 0.75), 0 15px 30px -5px rgba(0, 0, 0, 0.6);
+  }
+  50% {
+    border-color: #f59e0b;
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.5), 0 10px 20px -5px rgba(0, 0, 0, 0.3);
+  }
+}
+
+.danger-glow-card {
+  animation: danger-border-glow 1s infinite ease-in-out;
+}
+
+/* ==========================================
+   IMAGE SLIDE EFFECTS & CAROUSEL ANIMATIONS
+   ========================================== */
+
+/* 1. Image Slide-In & Pan Effect on hover */
+.slide-img-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.slide-img-container img {
+  transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), filter 0.6s ease;
+  will-change: transform;
+}
+
+.slide-img-container:hover img {
+  transform: scale(1.08) translateX(-8px);
+}
+
+/* 2. Panoramic Carousel Slider Track */
+.carousel-track {
+  display: flex;
+  transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.carousel-slide {
+  flex: 0 0 100%;
+  width: 100%;
+}
+
+/* 3. Ken Burns subtle ambient slide animation */
+@keyframes ambient-slide {
+  0% {
+    transform: scale(1) translateX(0);
+  }
+  50% {
+    transform: scale(1.05) translateX(-15px);
+  }
+  100% {
+    transform: scale(1) translateX(0);
+  }
+}
+
+.ambient-slide-img {
+  animation: ambient-slide 18s infinite alternate ease-in-out;
+}
+
+/* 4. Slide Indicator Dots */
+.slide-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background-color: rgba(255, 255, 255, 0.35);
+  transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+  cursor: pointer;
+}
+
+.slide-dot.active {
+  width: 28px;
+  background-color: #34d399; /* emerald-400 */
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.8);
+}
+
+/* ==========================================
+   PREMIUM NAVIGATION TAB & HEADER SYSTEM
+   ========================================== */
+
+.nav-tab-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 0.35rem 0;
+}
+
+.nav-tab-container::-webkit-scrollbar {
+  display: none;
+}
+
+#mainAppNav, nav.bg-emerald-950\/95 {
+  background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%) !important;
+  border-top: 2px solid #86efac !important;
+  border-bottom: 2px solid #a7f3d0 !important;
+  box-shadow: 0 4px 15px -3px rgba(16, 185, 129, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+}
+
+.nav-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1.15rem;
+  border-radius: 0.875rem;
+  font-size: 0.825rem;
+  font-weight: 800;
+  white-space: nowrap;
+  color: #065f46 !important; /* Deep contrast emerald for high readability */
+  background: #ffffff !important; /* Clean light pill */
+  border: 1.5px solid #a7f3d0 !important; /* Crisp light green outline */
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.08);
+}
+
+.nav-tab:hover {
+  color: #047857 !important;
+  background: #f0fdf4 !important;
+  border-color: #10b981 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(16, 185, 129, 0.22);
+}
+
+.nav-tab.active {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  border: 2px solid #047857 !important;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.42), 0 0 12px rgba(52, 211, 153, 0.35) !important;
+  transform: translateY(-2px) scale(1.02);
+}
+
+.nav-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 20%;
+  right: 20%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #34d399, #10b981, transparent);
+  border-radius: 9999px;
+  box-shadow: 0 0 10px #34d399;
+}
+
+.nav-tab svg, .nav-tab i {
+  transition: transform 0.25s ease, color 0.25s ease;
+  flex-shrink: 0;
+  color: #059669 !important;
+}
+
+.nav-tab:hover svg, .nav-tab:hover i {
+  transform: scale(1.15);
+  color: #047857 !important;
+}
+
+.nav-tab.active svg, .nav-tab.active i {
+  transform: scale(1.15);
+  color: #fef08a !important;
+}
+
+/* Glowing Aura for Brand Emblem */
+.brand-glow {
+  position: relative;
+}
+
+.brand-glow::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, #fbbf24, #34d399, #f59e0b);
+  z-index: -1;
+  filter: blur(8px);
+  opacity: 0.75;
+  animation: pulse-glow 3s infinite alternate;
+}
+
+/* Interactive Ticker Ribbon */
+.ticker-ribbon {
+  background: linear-gradient(90deg, #022c22 0%, #064e3b 50%, #022c22 100%);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.35);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* ==============================================================
+   ULTRA EYE-CATCHING & ALERTING DANGER STYLES (CHAOS CONSOLE)
+   ============================================================== */
+
+@keyframes chaos-strobe-alert {
+  0%, 100% {
+    box-shadow: 0 0 35px rgba(239, 68, 68, 0.55), 0 0 70px rgba(220, 38, 38, 0.3), inset 0 0 30px rgba(239, 68, 68, 0.2);
+    border-color: #ef4444;
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(245, 158, 11, 0.65), 0 0 55px rgba(245, 158, 11, 0.35), inset 0 0 20px rgba(245, 158, 11, 0.25);
+    border-color: #f59e0b;
+  }
+}
+
+@keyframes danger-pulse-badge {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 10px #ef4444); }
+  50% { transform: scale(1.06); filter: drop-shadow(0 0 24px #ff003c); }
+}
+
+.chaos-console-ultra {
+  background: radial-gradient(circle at top right, #250508 0%, #100203 45%, #050001 100%);
+  border: 2px solid #ef4444;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 35px rgba(220, 38, 38, 0.45), inset 0 0 30px rgba(239, 68, 68, 0.15);
+  animation: chaos-strobe-alert 3s infinite ease-in-out;
+}
+
+.chaos-console-ultra::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: repeating-linear-gradient(
+    -45deg,
+    #ef4444,
+    #ef4444 10px,
+    #facc15 10px,
+    #facc15 20px,
+    #000000 20px,
+    #000000 30px
+  );
+  background-size: 60px 5px;
+  animation: hazard-scroll 0.6s linear infinite;
+  z-index: 10;
+}
+
+.chaos-console-ultra::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: repeating-linear-gradient(
+    -45deg,
+    #ef4444,
+    #ef4444 10px,
+    #facc15 10px,
+    #facc15 20px,
+    #000000 20px,
+    #000000 30px
+  );
+  background-size: 60px 5px;
+  animation: hazard-scroll 0.6s linear infinite;
+  z-index: 10;
+}
+
+.chaos-beacon-badge {
+  background: linear-gradient(135deg, #7f1d1d, #b91c1c, #ef4444);
+  color: #fff;
+  border: 1.5px solid #fca5a5;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.8), inset 0 1px 2px rgba(255, 255, 255, 0.3);
+  animation: danger-pulse-badge 1.8s infinite ease-in-out;
+}
+
+.chaos-btn-danger {
+  background: linear-gradient(135deg, #b91c1c 0%, #ef4444 50%, #dc2626 100%);
+  color: #ffffff !important;
+  border: 2px solid #fecaca;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.75), 0 4px 12px rgba(0, 0, 0, 0.6);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chaos-btn-danger:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px rgba(239, 68, 68, 1), 0 6px 18px rgba(0, 0, 0, 0.8);
+  filter: brightness(1.15);
+}
+
+.chaos-btn-cloud {
+  background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 50%, #9333ea 100%);
+  color: #ffffff !important;
+  border: 2px solid #e9d5ff;
+  box-shadow: 0 0 20px rgba(147, 51, 234, 0.75), 0 4px 12px rgba(0, 0, 0, 0.6);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chaos-btn-cloud:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px rgba(168, 85, 247, 1), 0 6px 18px rgba(0, 0, 0, 0.8);
+  filter: brightness(1.15);
+}
+
+/* ==============================================================
+   DANGEROUS FLOATING VISUAL NOTIFICATION (ABOVE CHATBOT)
+   ============================================================== */
+
+@keyframes chaosFloatingGlow {
+  0%, 100% {
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.85), 0 0 30px rgba(239, 68, 68, 0.6), inset 0 0 18px rgba(220, 38, 38, 0.25);
+    border-color: #ef4444;
+  }
+  50% {
+    box-shadow: 0 20px 54px rgba(0, 0, 0, 0.9), 0 0 48px rgba(245, 158, 11, 0.75), inset 0 0 24px rgba(245, 158, 11, 0.35);
+    border-color: #f59e0b;
+  }
+}
+
+@keyframes dangerStrobeFlash {
+  0%, 100% { opacity: 1; filter: brightness(1); }
+  50% { opacity: 0.85; filter: brightness(1.35); }
+}
+
+#chaosFloatingAlert {
+  position: fixed;
+  bottom: 166px;
+  right: 28px;
+  z-index: 9997;
+  width: 370px;
+  max-width: calc(100vw - 32px);
+  background: radial-gradient(circle at top right, #240507 0%, #100203 55%, #050001 100%);
+  border: 2px solid #ef4444;
+  border-radius: 20px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.85), 0 0 32px rgba(239, 68, 68, 0.6), inset 0 0 20px rgba(220, 38, 38, 0.2);
+  overflow: hidden;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease, bottom 0.3s ease, right 0.3s ease;
+  animation: chaosFloatingGlow 2.4s infinite ease-in-out;
+  color: #f8fafc;
+}
+
+#chaosFloatingAlert.alert-active {
+  border-color: #ff003c !important;
+  animation: chaosFloatingGlow 1.2s infinite ease-in-out, dangerStrobeFlash 1s infinite alternate;
+  box-shadow: 0 18px 56px rgba(220, 38, 38, 0.85), 0 0 45px rgba(239, 68, 68, 0.9), inset 0 0 25px rgba(255, 0, 60, 0.4) !important;
+}
+
+#chaosFloatingAlert.dismissed {
+  transform: translateY(24px) scale(0.85);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* When chat panel is open */
+body.chat-open #chaosFloatingAlert {
+  right: 424px; /* Dock directly to the left of the 380px chat panel */
+  bottom: 96px;
+}
+
+@media (max-width: 840px) {
+  body.chat-open #chaosFloatingAlert {
+    right: 16px;
+    bottom: calc(100vh - 80px); /* Stack above if screen narrow */
+    display: none; /* Auto-collapse to mini pill on small screens */
+  }
+}
+
+/* ==============================================================
+   DISTINCTIVE FLOATING ALERT SYMBOL & FAB (DIRECTLY ABOVE CHATBOT)
+   ============================================================== */
+
+@keyframes chaos-radar-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.chaos-spin-slow {
+  transform-origin: 18px 18px;
+  animation: chaos-radar-spin 12s linear infinite;
+}
+
+.chaos-danger-symbol-svg {
+  filter: drop-shadow(0 0 6px rgba(250, 204, 21, 0.8)) drop-shadow(0 0 12px rgba(239, 68, 68, 0.9));
+  transition: transform 0.25s ease, filter 0.25s ease;
+}
+
+#chaosAlertFab {
+  position: fixed;
+  bottom: 96px;
+  right: 28px;
+  z-index: 9998;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #991b1b 0%, #450a0a 60%, #1a0204 100%);
+  border: 2.5px solid #fca5a5;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), 0 0 20px rgba(239, 68, 68, 0.75), inset 0 2px 4px rgba(254, 202, 202, 0.4);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: danger-pulse-badge 2s infinite ease-in-out;
+}
+
+#chaosAlertFab:hover {
+  transform: scale(1.1);
+  border-color: #fef08a;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.9), 0 0 35px rgba(239, 68, 68, 1), 0 0 15px rgba(250, 204, 21, 0.8);
+}
+
+#chaosAlertFab .alert-fab-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 4px;
+  border-radius: 10px;
+  background: #facc15;
+  color: #000;
+  font-weight: 900;
+  font-size: 0.65rem;
+  border: 1.5px solid #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 10px rgba(250, 204, 21, 0.9);
+  animation: pulse 1.2s infinite;
+}
+
+#chaosAlertFab.crisis-active {
+  background: radial-gradient(circle at 35% 35%, #dc2626 0%, #7f1d1d 60%, #450a0a 100%);
+  border-color: #fef08a;
+  animation: dangerStrobeFlash 0.75s infinite alternate, danger-pulse-badge 1.2s infinite ease-in-out;
+  box-shadow: 0 0 40px rgba(239, 68, 68, 1), 0 0 20px rgba(250, 204, 21, 0.9) !important;
+}
+
+/* When chat panel is open, dock alert button left of chat */
+body.chat-open #chaosAlertFab {
+  right: 424px;
+  bottom: 28px;
+}
+
+#chaosAlertMiniPill {
+  position: fixed;
+  bottom: 164px;
+  right: 28px;
+  z-index: 9997;
+  background: linear-gradient(135deg, #b91c1c, #dc2626);
+  color: #fff;
+  border: 2px solid #fecaca;
+  padding: 6px 12px;
+  border-radius: 24px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 0 22px rgba(239, 68, 68, 0.8);
+  animation: danger-pulse-badge 1.4s infinite ease-in-out;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: 0.04em;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#chaosAlertMiniPill:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 30px rgba(239, 68, 68, 1);
+}
+
+@media (max-width: 440px) {
+  #chaosFloatingAlert {
+    right: 16px;
+    bottom: 144px;
+    width: calc(100vw - 32px);
+  }
+  #chaosAlertFab {
+    right: 16px;
+    bottom: 84px;
+    width: 50px;
+    height: 50px;
+  }
+  #chaosAlertMiniPill {
+    right: 16px;
+    bottom: 140px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SECTION HEADER THEME STYLES (DYNAMIC COLOR SCHEME PER SECTION)
+   ══════════════════════════════════════════════════════════════ */
+#mainAppHeader {
+  transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+#mainAppNav {
+  transition: background 0.4s ease, border-color 0.4s ease;
+}
+
+#headerSectionBadge {
+  transition: all 0.35s ease;
+}
+
+/* 1. Mandi Preview: Golden Harvest & e-NAM Emerald */
+.header-theme-preview #mainAppHeader {
+  background: linear-gradient(135deg, #022c22 0%, #451a03 55%, #064e3b 100%) !important;
+  border-bottom-color: #f59e0b !important;
+  box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.25) !important;
+}
+.header-theme-preview #mainAppNav {
+  background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%) !important;
+  border-top-color: #f59e0b !important;
+  border-bottom-color: #a7f3d0 !important;
+}
+
+/* 2. Farmer Portal: Earthy Forest Green & Jade */
+.header-theme-farmer #mainAppHeader {
+  background: linear-gradient(135deg, #047857 0%, #064e3b 50%, #065f46 100%) !important;
+  border-bottom-color: #10b981 !important;
+  box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.25) !important;
+}
+.header-theme-farmer #mainAppNav {
+  background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%) !important;
+  border-top-color: #10b981 !important;
+  border-bottom-color: #a7f3d0 !important;
+}
+
+/* 3. Zero-Smartphone IVR: Bharat Telecom Indigo & Cobalt */
+.header-theme-ivr #mainAppHeader {
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #172554 100%) !important;
+  border-bottom-color: #38bdf8 !important;
+  box-shadow: 0 10px 25px -5px rgba(56, 189, 248, 0.25) !important;
+}
+.header-theme-ivr #mainAppNav {
+  background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%) !important;
+  border-top-color: #38bdf8 !important;
+  border-bottom-color: #a7f3d0 !important;
+}
+
+/* 4. IMD Weather Radar: Atmospheric Deep Sky & Doppler Cyan */
+.header-theme-weather #mainAppHeader {
+  background: linear-gradient(135deg, #082f49 0%, #0c4a6e 50%, #164e63 100%) !important;
+  border-bottom-color: #22d3ee !important;
+  box-shadow: 0 10px 25px -5px rgba(34, 211, 238, 0.25) !important;
+}
+.header-theme-weather #mainAppNav {
+  background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%) !important;
+  border-top-color: #22d3ee !important;
+  border-bottom-color: #a7f3d0 !important;
+}
+
+/* 5. Impact & Benefits: Prosperity Teal & Mint Gold */
+.header-theme-impact #mainAppHeader {
+  background: linear-gradient(135deg, #042f2e 0%, #134e4a 50%, #064e3b 100%) !important;
+  border-bottom-color: #2dd4bf !important;
+  box-shadow: 0 10px 25px -5px rgba(45, 212, 191, 0.25) !important;
+}
+.header-theme-impact #mainAppNav {
+  background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%) !important;
+  border-top-color: #2dd4bf !important;
+  border-bottom-color: #a7f3d0 !important;
+}
+
+/* 6. APMC Standards & Resilience: DEFCON Industrial Crimson */
+.header-theme-matrix #mainAppHeader {
+  background: linear-gradient(135deg, #450a0a 0%, #1c1917 50%, #7f1d1d 100%) !important;
+  border-bottom-color: #ef4444 !important;
+  box-shadow: 0 10px 30px -5px rgba(239, 68, 68, 0.35) !important;
+}
+.header-theme-matrix #mainAppNav {
+  background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%) !important;
+  border-top-color: #ef4444 !important;
+  border-bottom-color: #a7f3d0 !important;
+}
+
+/* 7. Mandi Offers & Tenders: Festive Tangerine Orange & Sun Gold */
+.header-theme-offers #mainAppHeader {
+  background: linear-gradient(135deg, #431407 0%, #7c2d12 50%, #78350f 100%) !important;
+  border-bottom-color: #f97316 !important;
+  box-shadow: 0 10px 25px -5px rgba(249, 115, 22, 0.25) !important;
+}
+.header-theme-offers #mainAppNav {
+  background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%) !important;
+  border-top-color: #f97316 !important;
+  border-bottom-color: #a7f3d0 !important;
+}
+
+/* 8. Price Timeline & Trends: Financial Analytics Royal Purple */
+.header-theme-timeline #mainAppHeader {
+  background: linear-gradient(135deg, #2e1065 0%, #3b0764 50%, #1e1b4b 100%) !important;
+  border-bottom-color: #a855f7 !important;
+  box-shadow: 0 10px 25px -5px rgba(168, 85, 247, 0.25) !important;
+}
+.header-theme-timeline #mainAppNav {
+  background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%) !important;
+  border-top-color: #a855f7 !important;
+  border-bottom-color: #a7f3d0 !important;
+}
+
+/* ==========================================================================
+   9. IMD Doppler Weather Radar & Interactive India Rainfall Map
+   ========================================================================== */
+.india-state {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+.india-state:hover {
+  filter: brightness(1.35);
+  stroke: #38bdf8 !important;
+  stroke-width: 2.5px !important;
+}
+.state-active {
+  stroke: #38bdf8 !important;
+  stroke-width: 3px !important;
+  filter: drop-shadow(0 0 10px #38bdf8) brightness(1.2);
+}
+@keyframes radar-sweep {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.radar-sweep-line {
+  transform-origin: 195px 240px;
+  animation: radar-sweep 6s linear infinite;
+}
+@keyframes pulse-radar-ring {
+  0% { r: 5px; opacity: 1; }
+  100% { r: 18px; opacity: 0; }
+}
+.pulse-radar-ring {
+  animation: pulse-radar-ring 1.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+}
+
+@media print {
+  #chaosFloatingAlert,
+  #chaosFloatingMiniBtn,
+  #chatFab,
+  #chatPanel,
+  .floating-widget,
+  #mobileNavDrawer {
+    display: none !important;
+  }
+}
+
+
+
+

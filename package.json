@@ -1,0 +1,29 @@
+{
+  "name": "kisan-q-smart-mandi",
+  "version": "1.0.0",
+  "description": "Smart Slot Booking for Grain Purchase (SIH26032) - Prototype by Team ByteKnight",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "db:view": "node view_db.js"
+  },
+  "keywords": [
+    "sih2026",
+    "kisan-token",
+    "apmc-mandi",
+    "slot-booking",
+    "agritech",
+    "foodtech"
+  ],
+  "author": "ByteKnight",
+  "license": "MIT",
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
+    "express": "^4.19.2",
+    "pg": "^8.23.0",
+    "qrcode": "^1.5.4"
+  }
+}

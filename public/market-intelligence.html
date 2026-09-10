@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Market Intelligence &mdash; KISAN-Q Smart Mandi</title>
+<link rel="icon" href="/images/kisan_q_icon.svg" type="image/svg+xml" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f8faf5; color: #1a2e1a; }
+
+  /* HEADER */
+  .top-header {
+    background: #ffffff; border-bottom: 3px solid #16a34a;
+    padding: 0 24px; display: flex; align-items: center;
+    justify-content: space-between; min-height: 72px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,.08);
+  }
+  .brand-block { display: flex; align-items: center; gap: 14px; }
+  .logo-box {
+    width: 48px; height: 48px; border-radius: 10px;
+    background: linear-gradient(135deg, #16a34a, #15803d);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo-box img { width: 32px; height: 32px; filter: brightness(0) invert(1); }
+  .brand-name {
+    font-size: 1.3rem; font-weight: 800; letter-spacing: .08em;
+    background: linear-gradient(135deg, #15803d, #16a34a, #f59e0b);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .brand-tagline { font-size: .65rem; font-weight: 600; letter-spacing: .18em; color: #6b7280; text-transform: uppercase; }
+  .header-ctas { display: flex; gap: 8px; align-items: center; }
+  .btn-nav {
+    padding: 7px 16px; border-radius: 8px; font-size: .8rem; font-weight: 700;
+    border: 2px solid #16a34a; color: #16a34a; background: transparent;
+    text-decoration: none; transition: all .2s;
+  }
+  .btn-nav:hover { background: #16a34a; color: #fff; }
+
+  /* SUBNAV */
+  .subnav { background: #14532d; display: flex; align-items: stretch; padding: 0 24px; position: sticky; top: 72px; z-index: 99; }
+  .subnav-item { color: rgba(255,255,255,.75); font-size: .82rem; font-weight: 600; padding: 11px 18px; text-decoration: none; letter-spacing: .04em; border-bottom: 3px solid transparent; transition: color .2s, background .2s, border-color .2s; cursor: pointer; }
+  .subnav-item:hover { color: #fff; background: rgba(255,255,255,.08); }
+  .subnav-item.active { color: #fff; background: #166534; border-bottom-color: #f59e0b; }
+
+  /* PAGE HERO */
+  .page-hero {
+    background: linear-gradient(135deg, #14532d 0%, #15803d 60%, #166534 100%);
+    padding: 48px 32px; color: #fff; position: relative; overflow: hidden;
+  }
+  .page-hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url('/images/hero_wheat_farm.jpg') center/cover no-repeat;
+    opacity: .12;
+  }
+  .page-hero-inner { position: relative; z-index: 1; max-width: 900px; }
+  .page-hero-eyebrow { font-size: .72rem; font-weight: 800; letter-spacing: .22em; color: #f59e0b; text-transform: uppercase; margin-bottom: 10px; }
+  .page-hero h1 { font-size: 2.4rem; font-weight: 900; line-height: 1.1; margin-bottom: 14px; }
+  .page-hero p { font-size: 1rem; color: rgba(255,255,255,.8); line-height: 1.6; max-width: 620px; }
+
+  /* CROP SELECTOR */
+  .crop-selector { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 18px 32px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .crop-selector label { font-size: .85rem; font-weight: 700; color: #374151; }
+  .crop-btn {
+    padding: 8px 20px; border-radius: 24px; font-size: .82rem; font-weight: 700;
+    border: 2px solid #d1d5db; color: #6b7280; background: #f9fafb; cursor: pointer;
+    transition: all .2s; display: flex; align-items: center; gap: 6px;
+  }
+  .crop-btn:hover { border-color: #16a34a; color: #15803d; }
+  .crop-btn.active { border-color: #16a34a; background: #dcfce7; color: #15803d; box-shadow: 0 2px 8px rgba(22,163,74,.2); }
+
+  /* MAIN GRID */
+  .main-grid { display: grid; grid-template-columns: 1fr 340px; gap: 24px; padding: 32px; max-width: 1400px; margin: 0 auto; }
+  @media (max-width: 1024px) { .main-grid { grid-template-columns: 1fr; } }
+
+  /* CHART CARD */
+  .chart-card {
+    background: #fff; border-radius: 16px; padding: 28px;
+    box-shadow: 0 2px 16px rgba(0,0,0,.06); border: 1px solid #e5e7eb;
+  }
+  .chart-card + .chart-card { margin-top: 24px; }
+  .card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 22px; }
+  .card-title { font-size: 1.05rem; font-weight: 800; color: #1a2e1a; }
+  .card-subtitle { font-size: .78rem; color: #6b7280; margin-top: 3px; }
+  .chart-wrap { height: 280px; position: relative; }
+  .chart-wrap canvas { width: 100% !important; }
+
+  /* SIDEBAR */
+  .sidebar { display: flex; flex-direction: column; gap: 20px; }
+
+  /* SIGNAL CARD */
+  .signal-card {
+    background: #fff; border-radius: 16px; padding: 24px;
+    box-shadow: 0 2px 16px rgba(0,0,0,.06); border: 1px solid #e5e7eb;
+  }
+  .signal-title { font-size: .75rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #6b7280; margin-bottom: 14px; }
+  .signal-badge {
+    display: flex; align-items: center; gap: 10px;
+    background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+    border: 2px solid #16a34a; border-radius: 12px;
+    padding: 16px; margin-bottom: 14px;
+  }
+  .signal-badge.hold { background: linear-gradient(135deg, #fef3c7, #fde68a); border-color: #f59e0b; }
+  .signal-icon { font-size: 2.2rem; }
+  .signal-label { font-size: 1.1rem; font-weight: 900; color: #15803d; }
+  .signal-badge.hold .signal-label { color: #b45309; }
+  .signal-reason { font-size: .82rem; color: #374151; line-height: 1.55; }
+  .signal-meta { font-size: .75rem; color: #9ca3af; margin-top: 10px; }
+
+  /* MSP TABLE */
+  .msp-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+  .msp-table th { background: #f0fdf4; color: #166534; font-weight: 700; padding: 9px 10px; text-align: left; border-bottom: 2px solid #bbf7d0; }
+  .msp-table td { padding: 8px 10px; border-bottom: 1px solid #f3f4f6; color: #374151; }
+  .msp-table tr:hover td { background: #f9fafb; }
+  .msp-table .change-up { color: #16a34a; font-weight: 700; }
+  .msp-table .change-down { color: #dc2626; font-weight: 700; }
+
+  /* SEASONAL CALENDAR */
+  .season-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 3px; margin-top: 12px; }
+  .season-cell {
+    border-radius: 4px; height: 36px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; font-size: .55rem; font-weight: 700;
+    color: #fff;
+  }
+  .season-cell.harvest { background: #f59e0b; }
+  .season-cell.peak-price { background: #16a34a; }
+  .season-cell.low-price { background: #dc2626; }
+  .season-cell.normal { background: #d1d5db; color: #374151; }
+  .season-legend { display: flex; gap: 12px; margin-top: 10px; flex-wrap: wrap; }
+  .season-legend-item { display: flex; align-items: center; gap: 5px; font-size: .72rem; color: #4b5563; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
+
+  /* STATS ROW */
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px,1fr)); gap: 16px; padding: 0 32px 32px; max-width: 1400px; margin: 0 auto; }
+  .stat-card {
+    background: #fff; border-radius: 14px; padding: 20px;
+    border-top: 4px solid #16a34a; box-shadow: 0 2px 10px rgba(0,0,0,.05);
+    text-align: center;
+  }
+  .stat-value { font-size: 1.8rem; font-weight: 900; color: #15803d; }
+  .stat-label { font-size: .72rem; color: #6b7280; font-weight: 600; margin-top: 4px; text-transform: uppercase; letter-spacing: .08em; }
+
+  /* FOOTER */
+  .footer { background: #14532d; color: rgba(255,255,255,.7); padding: 24px; text-align: center; font-size: .8rem; line-height: 1.7; }
+  .footer strong { color: #fff; }
+  .footer a { color: #86efac; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="top-header">
+  <div class="brand-block">
+    <div class="logo-box"><img src="/images/kisan_q_icon.svg" alt="KISAN-Q" /></div>
+    <div>
+      <div class="brand-name">KISAN-Q</div>
+      <div class="brand-tagline">Smart Mandi &bull; Market Intelligence</div>
+    </div>
+  </div>
+  <div class="header-ctas">
+    <a href="/preview.html" class="btn-nav">&#128065; Preview</a>
+    <a href="/" class="btn-nav">&#127968; Main Portal</a>
+  </div>
+</header>
+
+<!-- SUBNAV -->
+<nav class="subnav">
+  <a class="subnav-item" href="/">&#127968; Home</a>
+  <a class="subnav-item" href="/">&#128197; Book a slot</a>
+  <a class="subnav-item active" href="#">&#128200; Grain prices</a>
+  <a class="subnav-item" href="#">&#128240; Latest updates</a>
+  <a class="subnav-item" href="#">&#10067; Help</a>
+</nav>
+
+<!-- PAGE HERO -->
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-hero-eyebrow">&#128200; Market intelligence dashboard</div>
+    <h1>Price History, Trends &amp; Sell Signals</h1>
+    <p>Six years of MSP data, seasonal price calendars, and AI-powered sell-vs-hold recommendations to help you get the best value from your crop.</p>
+  </div>
+</div>
+
+<!-- CROP SELECTOR -->
+<div class="crop-selector">
+  <label>Select crop:</label>
+  <button class="crop-btn active" onclick="selectCrop('wheat',this)">&#127807; Wheat</button>
+  <button class="crop-btn" onclick="selectCrop('paddy',this)">&#127809; Paddy</button>
+  <button class="crop-btn" onclick="selectCrop('mustard',this)">&#127804; Mustard</button>
+  <button class="crop-btn" onclick="selectCrop('maize',this)">&#128019; Maize</button>
+  <button class="crop-btn" onclick="selectCrop('cotton',this)">&#127812; Cotton</button>
+  <button class="crop-btn" onclick="selectCrop('chana',this)">&#129411; Chana</button>
+</div>
+
+<!-- STATS ROW -->
+<div class="stats-row" id="statsRow">
+  <div class="stat-card"><div class="stat-value" id="statCurrent">&#8377;2,275</div><div class="stat-label">Current MSP (2025-26)</div></div>
+  <div class="stat-card"><div class="stat-value" id="statGrowth">+15.2%</div><div class="stat-label">5-Year MSP Growth</div></div>
+  <div class="stat-card"><div class="stat-value" id="statPeak">&#8377;2,275</div><div class="stat-label">All-Time MSP High</div></div>
+  <div class="stat-card"><div class="stat-value" id="statLow">&#8377;1,840</div><div class="stat-label">5-Year MSP Low</div></div>
+  <div class="stat-card"><div class="stat-value" id="statBestMonth">Mar&ndash;Apr</div><div class="stat-label">Best Sell Window</div></div>
+</div>
+
+<!-- MAIN GRID -->
+<div class="main-grid">
+  <div class="charts-col">
+    <!-- Price Timeline Chart -->
+    <div class="chart-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">&#128200; MSP Price Timeline (2020&ndash;2026)</div>
+          <div class="card-subtitle">Official Government of India Minimum Support Price per quintal</div>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="timelineChart"></canvas></div>
+    </div>
+
+    <!-- Seasonal Price Pattern Chart -->
+    <div class="chart-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">&#128197; Seasonal Market Price Pattern</div>
+          <div class="card-subtitle">Average market price variation across months (above/below MSP)</div>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="seasonalChart"></canvas></div>
+    </div>
+
+    <!-- MSP History Table -->
+    <div class="chart-card">
+      <div class="card-header"><div class="card-title">&#128203; Year-Wise MSP History &mdash; All Major Crops</div></div>
+      <div style="overflow-x:auto">
+        <table class="msp-table">
+          <thead>
+            <tr>
+              <th>Crop</th>
+              <th>2020-21</th>
+              <th>2021-22</th>
+              <th>2022-23</th>
+              <th>2023-24</th>
+              <th>2024-25</th>
+              <th>2025-26</th>
+              <th>5Y Change</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>&#127807; Wheat</td><td>1,975</td><td>1,975</td><td>2,015</td><td>2,125</td><td>2,275</td><td>2,275</td><td class="change-up">+&#8377;300</td></tr>
+            <tr><td>&#127809; Paddy</td><td>1,868</td><td>1,888</td><td>1,940</td><td>2,183</td><td>2,300</td><td>2,300</td><td class="change-up">+&#8377;432</td></tr>
+            <tr><td>&#127804; Mustard</td><td>4,425</td><td>4,650</td><td>5,050</td><td>5,450</td><td>5,650</td><td>5,650</td><td class="change-up">+&#8377;1,225</td></tr>
+            <tr><td>&#128019; Maize</td><td>1,700</td><td>1,850</td><td>1,962</td><td>2,090</td><td>2,090</td><td>2,090</td><td class="change-up">+&#8377;390</td></tr>
+            <tr><td>&#127812; Cotton</td><td>5,515</td><td>5,726</td><td>6,080</td><td>6,620</td><td>7,121</td><td>7,121</td><td class="change-up">+&#8377;1,606</td></tr>
+            <tr><td>&#129411; Chana</td><td>5,100</td><td>5,100</td><td>5,230</td><td>5,440</td><td>5,650</td><td>5,650</td><td class="change-up">+&#8377;550</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <!-- Sell Signal -->
+    <div class="signal-card">
+      <div class="signal-title">&#128161; AI Sell Signal &mdash; <span id="signalCrop">Wheat</span></div>
+      <div class="signal-badge" id="signalBadge">
+        <div class="signal-icon" id="signalIcon">&#128994;</div>
+        <div class="signal-label" id="signalLabel">SELL NOW</div>
+      </div>
+      <div class="signal-reason" id="signalReason">
+        Current market price for Wheat is at or above MSP. Seasonal peak typically hits in March-April post-rabi harvest. If you have stock from this season, this is a strong window to sell before prices dip in May.
+      </div>
+      <div class="signal-meta" id="signalMeta">Based on MSP 2025-26 &bull; 6-year price pattern analysis</div>
+    </div>
+
+    <!-- Best Month to Sell -->
+    <div class="signal-card">
+      <div class="signal-title">&#128197; Seasonal Sell Calendar &mdash; <span id="calCrop">Wheat</span></div>
+      <div class="season-grid" id="seasonGrid">
+        <!-- filled by JS -->
+      </div>
+      <div class="season-legend">
+        <div class="season-legend-item"><div class="legend-dot" style="background:#16a34a"></div> Peak price</div>
+        <div class="season-legend-item"><div class="legend-dot" style="background:#f59e0b"></div> Harvest</div>
+        <div class="season-legend-item"><div class="legend-dot" style="background:#dc2626"></div> Low price</div>
+        <div class="season-legend-item"><div class="legend-dot" style="background:#d1d5db"></div> Normal</div>
+      </div>
+    </div>
+
+    <!-- Tips Card -->
+    <div class="signal-card">
+      <div class="signal-title">&#128218; Selling Tips &amp; Best Practices</div>
+      <ul style="font-size:.82rem;color:#374151;line-height:1.7;padding-left:18px">
+        <li>Sell within 2-3 weeks of harvest to avoid storage loss</li>
+        <li>Book a mandi slot in advance to avoid long queues</li>
+        <li>Ensure moisture content below 14% for premium grade</li>
+        <li>Compare local market price vs e-NAM before selling</li>
+        <li>Hold stock beyond July only if you have dry storage</li>
+        <li>Check government procurement windows &mdash; MSP is guaranteed only during procurement season</li>
+      </ul>
+    </div>
+  </aside>
+</div>
+
+<footer class="footer">
+  <strong>KISAN-Q Smart Mandi &mdash; Market Intelligence</strong><br />
+  <a href="/">Main Portal</a> &nbsp;&bull;&nbsp;
+  <a href="/preview.html">Preview Page</a><br />
+  All MSP values are official GoI data. Market prices are indicative and may vary by location.
+</footer>
+
+<script>
+  // ── DATA ──
+  const LABELS = ['2020-21','2021-22','2022-23','2023-24','2024-25','2025-26'];
+  const cropData = {
+    wheat:   { name:'Wheat',   icon:'&#127807;', msp:[1975,1975,2015,2125,2275,2275], growth:'+15.2%', peak:'&#8377;2,275', low:'&#8377;1,840', bestMonth:'Mar&ndash;Apr', signal:'sell', reason:'Current market price for Wheat is at or above MSP. Seasonal peak hits in March-April post-rabi harvest. If you have stock from this season, this is a strong window to sell before prices dip in May.', seasonPattern:[3,3,4,4,2,2,1,1,1,2,3,3] },
+    paddy:   { name:'Paddy',   icon:'&#127809;', msp:[1868,1888,1940,2183,2300,2300], growth:'+23.1%', peak:'&#8377;2,300', low:'&#8377;1,750', bestMonth:'Nov&ndash;Dec', signal:'sell', reason:'Kharif paddy prices peak in Nov-Dec when procurement opens. Current MSP of Rs 2,300 is supported. Sell during the government procurement window for guaranteed MSP.', seasonPattern:[1,1,1,1,1,1,2,2,3,4,4,2] },
+    mustard: { name:'Mustard', icon:'&#127804;', msp:[4425,4650,5050,5450,5650,5650], growth:'+27.7%', peak:'&#8377;5,650', low:'&#8377;4,200', bestMonth:'Mar&ndash;May', signal:'sell', reason:'Mustard prices are near a 5-year high. Rabi mustard procurement typically opens in March. Sell now or within the next 6 weeks to maximise returns before import policy changes.', seasonPattern:[2,3,4,4,3,2,1,1,1,1,2,2] },
+    maize:   { name:'Maize',   icon:'&#128019;', msp:[1700,1850,1962,2090,2090,2090], growth:'+22.9%', peak:'&#8377;2,090', low:'&#8377;1,600', bestMonth:'Oct&ndash;Nov', signal:'hold', reason:'Maize prices in May-August are typically below MSP due to post-rabi surplus. Consider holding until October when kharif maize arrives and prices firm up.', seasonPattern:[2,2,1,1,1,1,1,2,3,4,4,3] },
+    cotton:  { name:'Cotton',  icon:'&#127812;', msp:[5515,5726,6080,6620,7121,7121], growth:'+29.1%', peak:'&#8377;7,121', low:'&#8377;5,200', bestMonth:'Jan&ndash;Feb', signal:'sell', reason:'Cotton prices peak in January-February as ginning demand rises. MSP is at an all-time high of Rs 7,121. Strong window for early selling before new crop arrives in October.', seasonPattern:[4,4,3,2,1,1,1,1,2,3,3,4] },
+    chana:   { name:'Chana',   icon:'&#129411;', msp:[5100,5100,5230,5440,5650,5650], growth:'+10.8%', peak:'&#8377;5,650', low:'&#8377;4,800', bestMonth:'Apr&ndash;Jun', signal:'hold', reason:'Chana (chickpea) market prices are currently below MSP in many states. It is advisable to wait for government NCCF/NAFED procurement, typically April-June, for MSP-guaranteed sale.', seasonPattern:[1,1,2,4,4,3,2,1,1,1,2,2] }
+  };
+
+  // Season month labels
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const patternClasses = ['normal','low-price','normal','harvest','peak-price'];
+
+  let timelineChart, seasonalChart;
+  let currentCrop = 'wheat';
+
+  function initCharts() {
+    // Timeline Chart
+    const tlCtx = document.getElementById('timelineChart').getContext('2d');
+    timelineChart = new Chart(tlCtx, {
+      type: 'line',
+      data: {
+        labels: LABELS,
+        datasets: [{
+          label: 'Wheat MSP (Rs/qtl)',
+          data: cropData.wheat.msp,
+          borderColor: '#16a34a',
+          backgroundColor: 'rgba(22,163,74,.12)',
+          borderWidth: 3,
+          pointRadius: 5,
+          pointBackgroundColor: '#16a34a',
+          fill: true,
+          tension: 0.35
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: {
+            ticks: { callback: function(v) { return 'Rs ' + v.toLocaleString('en-IN'); } },
+            grid: { color: 'rgba(0,0,0,.05)' }
+          },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+
+    // Seasonal Chart
+    const seaCtx = document.getElementById('seasonalChart').getContext('2d');
+    const wheatSeasonal = [105,104,108,107,100,98,96,97,98,100,102,104];
+    seasonalChart = new Chart(seaCtx, {
+      type: 'bar',
+      data: {
+        labels: months,
+        datasets: [{
+          label: 'Market Price (% of MSP)',
+          data: wheatSeasonal,
+          backgroundColor: wheatSeasonal.map(function(v) {
+            if (v >= 107) return 'rgba(22,163,74,.85)';
+            if (v <= 97)  return 'rgba(220,38,38,.75)';
+            return 'rgba(245,158,11,.7)';
+          }),
+          borderRadius: 6,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(ctx) { return 'Approx ' + ctx.raw + '% of MSP'; }
+            }
+          }
+        },
+        scales: {
+          y: {
+            min: 90, max: 115,
+            ticks: { callback: function(v) { return v + '%'; } },
+            grid: { color: 'rgba(0,0,0,.05)' }
+          },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  const seasonalPatterns = {
+    wheat:   [105,104,108,107,100,98,96,97,98,100,102,104],
+    paddy:   [96,96,97,98,98,98,100,103,107,108,106,100],
+    mustard: [97,99,108,106,103,99,96,96,97,97,99,100],
+    maize:   [100,99,98,97,96,96,97,99,101,106,107,103],
+    cotton:  [106,107,103,99,96,95,95,97,100,102,104,107],
+    chana:   [96,97,99,104,106,103,99,97,96,96,97,99]
+  };
+
+  function selectCrop(crop, btn) {
+    currentCrop = crop;
+    document.querySelectorAll('.crop-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    const d = cropData[crop];
+
+    // Stats
+    document.getElementById('statCurrent').innerHTML = 'Rs ' + d.msp[5].toLocaleString('en-IN');
+    document.getElementById('statGrowth').textContent = d.growth;
+    document.getElementById('statPeak').innerHTML = d.peak;
+    document.getElementById('statLow').innerHTML = d.low;
+    document.getElementById('statBestMonth').innerHTML = d.bestMonth;
+
+    // Update timeline chart
+    timelineChart.data.datasets[0].label = d.name + ' MSP (Rs/qtl)';
+    timelineChart.data.datasets[0].data = d.msp;
+    const color = d.signal === 'sell' ? '#16a34a' : '#f59e0b';
+    timelineChart.data.datasets[0].borderColor = color;
+    timelineChart.data.datasets[0].backgroundColor = d.signal === 'sell' ? 'rgba(22,163,74,.12)' : 'rgba(245,158,11,.12)';
+    timelineChart.data.datasets[0].pointBackgroundColor = color;
+    timelineChart.update();
+
+    // Update seasonal chart
+    const pat = seasonalPatterns[crop];
+    seasonalChart.data.datasets[0].data = pat;
+    seasonalChart.data.datasets[0].backgroundColor = pat.map(function(v) {
+      if (v >= 105) return 'rgba(22,163,74,.85)';
+      if (v <= 97)  return 'rgba(220,38,38,.75)';
+      return 'rgba(245,158,11,.7)';
+    });
+    seasonalChart.update();
+
+    // Signal
+    const badge = document.getElementById('signalBadge');
+    const icon = document.getElementById('signalIcon');
+    const label = document.getElementById('signalLabel');
+    document.getElementById('signalCrop').textContent = d.name;
+    document.getElementById('calCrop').textContent = d.name;
+    document.getElementById('signalReason').textContent = d.reason;
+    document.getElementById('signalMeta').textContent = 'Based on MSP 2025-26 and 6-year price pattern analysis';
+    if (d.signal === 'sell') {
+      badge.className = 'signal-badge';
+      icon.textContent = String.fromCodePoint(0x1F7E2);
+      label.textContent = 'SELL NOW';
+      label.style.color = '#15803d';
+    } else {
+      badge.className = 'signal-badge hold';
+      icon.textContent = String.fromCodePoint(0x1F7E1);
+      label.textContent = 'HOLD — WAIT FOR PEAK';
+      label.style.color = '#b45309';
+    }
+
+    // Season grid
+    const grid = document.getElementById('seasonGrid');
+    grid.innerHTML = '';
+    const pat2 = d.seasonPattern;
+    months.forEach(function(m, i) {
+      const cell = document.createElement('div');
+      cell.className = 'season-cell ' + patternClasses[pat2[i]];
+      cell.textContent = m.substring(0,1);
+      cell.title = m + ': ' + (['','Low','Normal','Harvest','Peak'][pat2[i]]);
+      grid.appendChild(cell);
+    });
+  }
+
+  // Init season grid for wheat
+  function buildInitialSeasonGrid() {
+    const grid = document.getElementById('seasonGrid');
+    const d = cropData.wheat;
+    months.forEach(function(m, i) {
+      const cell = document.createElement('div');
+      cell.className = 'season-cell ' + patternClasses[d.seasonPattern[i]];
+      cell.textContent = m.substring(0,1);
+      grid.appendChild(cell);
+    });
+  }
+
+  buildInitialSeasonGrid();
+  initCharts();
+</script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&family=Mukta+Mahee:wght@400;600;700;800&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --color-mandi-50: #f0fdf4;
+  --color-mandi-100: #dcfce7;
+  --color-mandi-600: #16a34a;
+  --color-mandi-700: #15803d;
+  --color-mandi-800: #166534;
+  --color-mandi-900: #14532d;
+  --font-sans: 'Poppins', 'Mukta Mahee', 'Noto Sans Devanagari', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Scrollbar hide */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Continuous Marquee Animation */
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.animate-marquee {
+  display: inline-block;
+  white-space: nowrap;
+  animation: marquee 26s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Shimmer Button Effect */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer-btn {
+  background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 50%, #f59e0b 100%);
+  background-size: 200% 100%;
+  animation: shimmer 3s infinite linear;
+}
+
+/* Pulse Glow */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
+  50% { box-shadow: 0 0 25px rgba(245, 158, 11, 0.6); }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2.5s infinite ease-in-out;
+}
+
+/* Indian Tricolor Stripe */
+.tricolor-bar {
+  background: linear-gradient(90deg, #ff9933 33.33%, #ffffff 33.33%, #ffffff 66.66%, #138808 66.66%);
+  height: 4px;
+}
+
+/* Tab styles */
+.tab-active {
+  background: #166534;
+  border-bottom: 3px solid #fbbf24;
+  color: white;
+  font-weight: 700;
+}
+.tab-inactive {
+  color: #a7f3d0;
+  border-bottom: 3px solid transparent;
+}
+.tab-inactive:hover {
+  color: white;
+}
+
+/* Print styles */
+@media print {
+  header, .no-print { display: none !important; }
+  .print-full { display: block !important; }
+}

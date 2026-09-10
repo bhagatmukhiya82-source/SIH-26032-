@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 60" width="260" height="60">
+  <defs>
+    <linearGradient id="kqGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#064e3b"/>
+      <stop offset="50%" stop-color="#047857"/>
+      <stop offset="100%" stop-color="#022c22"/>
+    </linearGradient>
+    <linearGradient id="goldGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="50%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <linearGradient id="emeraldGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Left Icon Emblem -->
+  <g transform="translate(6, 6)">
+    <!-- Icon Container -->
+    <rect x="0" y="0" width="48" height="48" rx="14" fill="url(#kqGrad2)" stroke="url(#goldGrad2)" stroke-width="1.8"/>
+    <!-- Outer Q ring -->
+    <circle cx="23" cy="22" r="14" fill="none" stroke="url(#emeraldGrad2)" stroke-width="3" stroke-linecap="round"/>
+    <!-- Q Tail -->
+    <path d="M 31 30 L 39 40" stroke="url(#goldGrad2)" stroke-width="3.5" stroke-linecap="round"/>
+    <!-- Wheat sheaf center -->
+    <path d="M 23 31 C 23 25 23 16 23 11" stroke="url(#goldGrad2)" stroke-width="1.6" stroke-linecap="round"/>
+    <ellipse cx="20.5" cy="20" rx="2" ry="3.5" transform="rotate(-30 20.5 20)" fill="url(#goldGrad2)"/>
+    <ellipse cx="25.5" cy="20" rx="2" ry="3.5" transform="rotate(30 25.5 20)" fill="url(#goldGrad2)"/>
+    <ellipse cx="20.5" cy="15" rx="1.8" ry="3" transform="rotate(-30 20.5 15)" fill="url(#goldGrad2)"/>
+    <ellipse cx="25.5" cy="15" rx="1.8" ry="3" transform="rotate(30 25.5 15)" fill="url(#goldGrad2)"/>
+    <ellipse cx="23" cy="10" rx="1.6" ry="2.8" fill="url(#goldGrad2)"/>
+  </g>
+
+  <!-- Typography Brand Text -->
+  <text x="64" y="31" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="23" font-weight="900" letter-spacing="-0.5" fill="#ffffff">
+    KISAN<tspan fill="#f59e0b">-Q</tspan>
+  </text>
+  
+  <!-- Subtitle Badge -->
+  <text x="65" y="44" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="8.5" font-weight="800" letter-spacing="1.5" fill="#6ee7b7">
+    SMART MANDI PROCUREMENT
+  </text>
+</svg>
