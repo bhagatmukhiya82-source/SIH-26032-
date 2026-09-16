@@ -40,6 +40,7 @@ import {
   Send
 } from 'lucide-react';
 import { I18N_DICT, tHelper, translateDOM } from './i18nData';
+import { KisanVoiceAssistant } from './KisanVoiceAssistant';
 
 // --- TYPES & INTERFACES ---
 type Status = 
@@ -2673,6 +2674,9 @@ export default function KisanQApp() {
           </div>
         </div>
       )}
+ 
+      {/* 🎙️ Kisan AI Voice Assistant (कृषि मित्र) */}
+      <KisanVoiceAssistant lang={lang} onNavigate={setView} booking={booking} />
 
     </div>
   );
