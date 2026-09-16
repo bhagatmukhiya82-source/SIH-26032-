@@ -58,7 +58,7 @@
         <button onclick="openAppDownloadModal()" class="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold rounded-lg text-xs flex items-center gap-1 transition border border-amber-400/40" title="Scan QR Code with Phone or View Install Guide">
           <i data-lucide="qr-code" class="w-3.5 h-3.5"></i> 📱 Phone QR & Guide
         </button>
-        <button onclick="document.getElementById('kisanAiModal').classList.toggle('active')" class="px-3 py-1 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-amber-300 hover:text-white font-black rounded-lg text-xs flex items-center gap-1.5 transition border border-emerald-400/80 shadow-md transform hover:scale-105" title="Open Kisan AI Voice Assistant">
+        <button onclick="toggleChat(true, true)" class="px-3 py-1 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-amber-300 hover:text-white font-black rounded-lg text-xs flex items-center gap-1.5 transition border border-emerald-400/80 shadow-md transform hover:scale-105" title="Open Kisan AI Voice Assistant">
           <span>🎙️</span> कृषि मित्र (AI Voice Chat)
         </button>
       </div>
@@ -2985,6 +2985,14 @@
       transition: background .2s, transform .15s;
     }
     .chat-close:hover { background: rgba(255,255,255,.32); transform: scale(1.08); }
+    .chat-audio-btn {
+      background: rgba(255,255,255,.16); border: none; color: #fff;
+      width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+      font-size: 0.92rem; display: flex; align-items: center; justify-content: center;
+      transition: background .2s, transform .15s, opacity .2s;
+    }
+    .chat-audio-btn:hover { background: rgba(255,255,255,.32); transform: scale(1.08); }
+    .chat-audio-btn.muted { opacity: 0.55; }
 
     /* Messages Area */
     #chatMessages {
@@ -3062,6 +3070,38 @@
     }
     #chatSendBtn:hover { transform: scale(1.08); box-shadow: 0 4px 12px rgba(22,163,74,.4); }
     #chatSendBtn:disabled { opacity: .5; cursor: default; transform: none; box-shadow: none; }
+
+    .chat-mic-btn {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      border: none; cursor: pointer; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: transform .15s, box-shadow .15s, background .2s;
+      font-size: 1.05rem; box-shadow: 0 2px 8px rgba(245,158,11,.35);
+      position: relative;
+    }
+    .chat-mic-btn:hover { transform: scale(1.08); box-shadow: 0 4px 14px rgba(245,158,11,.5); }
+    .chat-mic-btn.listening {
+      background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+      animation: micPulseRing 1.2s infinite;
+    }
+    @keyframes micPulseRing {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); transform: scale(1.04); }
+      70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); transform: scale(1.1); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); transform: scale(1.04); }
+    }
+
+    .msg-audio-play-btn {
+      background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 12px;
+      padding: 3px 8px; font-size: 0.65rem; font-weight: 700; color: #166534;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 4px;
+      margin-top: 6px; transition: all .15s; line-height: 1.2;
+    }
+    .msg-audio-play-btn:hover { background: #dcfce7; border-color: #16a34a; }
+    .msg-audio-play-btn.speaking {
+      background: #fef08a; border-color: #f59e0b; color: #854d0e;
+      box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+    }
 
     @media (max-width: 440px) {
       #chatPanel { width: calc(100vw - 24px); right: 12px; bottom: 84px; height: calc(100vh - 100px); max-height: calc(100vh - 100px); border-radius: 18px; }
@@ -3168,6 +3208,7 @@
         <div class="chat-header-name">KISAN-Q Sahayak <span style="font-size:.65rem;background:rgba(255,255,255,.22);padding:2px 7px;border-radius:10px;font-weight:700;">AI</span></div>
         <div class="chat-header-status" id="chatStatusText">AI Help Assistant • Online</div>
       </div>
+      <button id="chatVoiceToggleBtn" class="chat-audio-btn" onclick="toggleChatAudio()" type="button" title="Toggle Human Voice Output (आवाज़ ऑन/ऑफ)" aria-label="Toggle voice output">🔊</button>
       <button class="chat-close" onclick="toggleChat()" aria-label="Close chat">✕</button>
     </div>
 
@@ -3218,7 +3259,8 @@
     <!-- Input Area -->
     <div class="chat-input-area">
       <input id="chatInput" type="text" autocomplete="off" onkeydown="if(event.key==='Enter') sendChat()" maxlength="300" placeholder="Ask anything about the mandi…" />
-      <button id="chatSendBtn" onclick="sendChat()" aria-label="Send message">➤</button>
+      <button id="chatVoiceMicBtn" onclick="toggleChatVoice()" type="button" class="chat-mic-btn" title="बोलकर प्रश्न पूछें (Speak Question)" aria-label="Voice input">🎙️</button>
+      <button id="chatSendBtn" onclick="sendChat()" aria-label="Send message" title="संदेश भेजें (Send)">➤</button>
     </div>
     <div style="padding:4px 12px 6px;text-align:center;font-size:.65rem;color:#94a3b8;background:#fff;border-top:1px solid #f1f5f9;display:flex;align-items:center;justify-content:center;gap:6px;">
       <span>🔒 e-NAM APMC Official AI</span>
@@ -3478,8 +3520,246 @@
           }).join('');
       }
 
+      // ── Audio & Voice Assistant State ──
+      let audioEnabled = localStorage.getItem('kisanChatAudio') !== 'false'; // default enabled
+      let isListening = false;
+      let isSpeaking = false;
+      let recognition = null;
+      let activeSpeakBtn = null;
+      let speechVoices = [];
+
+      function loadVoices() {
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+          speechVoices = window.speechSynthesis.getVoices() || [];
+        }
+      }
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        loadVoices();
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+      }
+
+      function updateAudioBtnUI() {
+        const btn = document.getElementById('chatVoiceToggleBtn');
+        if (btn) {
+          btn.innerHTML = audioEnabled ? '🔊' : '🔇';
+          btn.classList.toggle('muted', !audioEnabled);
+          btn.title = audioEnabled 
+            ? 'Human Voice Output: ON (Click to mute)' 
+            : 'Human Voice Output: OFF (Click to unmute)';
+        }
+      }
+
+      function toggleChatAudio() {
+        audioEnabled = !audioEnabled;
+        localStorage.setItem('kisanChatAudio', audioEnabled ? 'true' : 'false');
+        updateAudioBtnUI();
+        if (!audioEnabled) {
+          stopSpeaking();
+        }
+      }
+      window.toggleChatAudio = toggleChatAudio;
+
+      function getBestVoice(targetLang) {
+        if (!speechVoices || speechVoices.length === 0) {
+          loadVoices();
+        }
+        if (!speechVoices || speechVoices.length === 0) return null;
+
+        // Specific natural Indian voices priority
+        if (targetLang === 'hi') {
+          return speechVoices.find(v => (v.name.includes('Swara') || v.name.includes('Madhur') || v.name.includes('Google हिन्दी') || v.name.includes('Kalpana')) && v.lang.startsWith('hi'))
+              || speechVoices.find(v => v.lang.startsWith('hi'))
+              || speechVoices.find(v => v.name.toLowerCase().includes('hindi'))
+              || speechVoices.find(v => v.lang.includes('IN'))
+              || null;
+        }
+
+        if (targetLang === 'en') {
+          return speechVoices.find(v => (v.name.includes('Neerja') || v.name.includes('Prabhat') || v.name.includes('Google Indian English') || v.name.includes('India')) && v.lang.startsWith('en'))
+              || speechVoices.find(v => v.lang === 'en-IN' || v.lang === 'en_IN')
+              || speechVoices.find(v => v.lang.startsWith('en'))
+              || null;
+        }
+
+        // Regional languages (pa, mr, gu, bn, te, ta, kn)
+        const regVoice = speechVoices.find(v => v.lang.startsWith(targetLang));
+        if (regVoice) return regVoice;
+
+        // Fallback to Hindi or Indian English or default
+        return speechVoices.find(v => v.lang.startsWith('hi'))
+            || speechVoices.find(v => v.lang === 'en-IN')
+            || speechVoices[0] || null;
+      }
+
+      function cleanTextForSpeech(raw) {
+        if (!raw) return '';
+        return raw
+          .replace(/```[\s\S]*?```/g, '')
+          .replace(/`([^`]+)`/g, '$1')
+          .replace(/\*\*([^*]+)\*\*/g, '$1')
+          .replace(/\*([^*]+)\*/g, '$1')
+          .replace(/#{1,6}\s+/g, '')
+          .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+          .replace(/https?:\/\/\S+/g, '')
+          .replace(/₹\s*([0-9,]+)/g, (chatLang === 'hi' ? 'रुपये $1' : 'Rupees $1'))
+          .replace(/•/g, ', ')
+          .replace(/[|]/g, ' ')
+          .replace(/\n+/g, '. ')
+          .replace(/\s{2,}/g, ' ')
+          .trim();
+      }
+
+      function speakText(text, btnElement) {
+        if (!('speechSynthesis' in window)) return;
+        stopSpeaking();
+
+        const clean = cleanTextForSpeech(text);
+        if (!clean) return;
+
+        try {
+          const utter = new SpeechSynthesisUtterance(clean);
+          const voice = getBestVoice(chatLang);
+          if (voice) utter.voice = voice;
+          const langMap = { en: 'en-IN', hi: 'hi-IN', pa: 'pa-IN', mr: 'mr-IN', gu: 'gu-IN', bn: 'bn-IN', te: 'te-IN', ta: 'ta-IN', kn: 'kn-IN' };
+          utter.lang = langMap[chatLang] || 'hi-IN';
+          utter.rate = 0.95; // warm human cadence
+          utter.pitch = 1.0;
+
+          isSpeaking = true;
+          activeSpeakBtn = btnElement || null;
+
+          if (btnElement) {
+            btnElement.classList.add('speaking');
+            const icon = btnElement.querySelector('.audio-btn-icon');
+            const label = btnElement.querySelector('.audio-btn-label');
+            if (icon) icon.textContent = '⏹️';
+            if (label) label.textContent = (chatLang === 'hi' ? 'रोकें' : 'Stop');
+          }
+
+          utter.onend = function() { stopSpeaking(); };
+          utter.onerror = function() { stopSpeaking(); };
+
+          window.speechSynthesis.speak(utter);
+        } catch(e) {
+          console.warn('Speech synthesis error:', e);
+          stopSpeaking();
+        }
+      }
+
+      function stopSpeaking() {
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+          try { window.speechSynthesis.cancel(); } catch(e){}
+        }
+        isSpeaking = false;
+        if (activeSpeakBtn) {
+          activeSpeakBtn.classList.remove('speaking');
+          const icon = activeSpeakBtn.querySelector('.audio-btn-icon');
+          const label = activeSpeakBtn.querySelector('.audio-btn-label');
+          if (icon) icon.textContent = '🔊';
+          if (label) label.textContent = (chatLang === 'hi' ? 'सुनें' : 'Listen');
+          activeSpeakBtn = null;
+        }
+      }
+      window.stopSpeaking = stopSpeaking;
+
+      // ── Speech Recognition (Voice Input) ──
+      function toggleChatVoice() {
+        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRec) {
+          alert(chatLang === 'hi' 
+            ? 'आपके ब्राउज़र में वॉइस इनपुट उपलब्ध नहीं है। कृपया Chrome या Edge का उपयोग करें।' 
+            : 'Voice input is not supported in this browser. Please use Google Chrome or Microsoft Edge.');
+          return;
+        }
+
+        const micBtn = document.getElementById('chatVoiceMicBtn');
+        if (isListening) {
+          stopListening();
+          return;
+        }
+
+        stopSpeaking();
+
+        try {
+          recognition = new SpeechRec();
+          recognition.continuous = false;
+          recognition.interimResults = true;
+
+          const langMap = { en: 'en-IN', hi: 'hi-IN', pa: 'pa-IN', mr: 'mr-IN', gu: 'gu-IN', bn: 'bn-IN', te: 'te-IN', ta: 'ta-IN', kn: 'kn-IN' };
+          recognition.lang = langMap[chatLang] || 'hi-IN';
+
+          const prevPlaceholder = input ? input.placeholder : '';
+
+          recognition.onstart = function() {
+            isListening = true;
+            if (micBtn) {
+              micBtn.classList.add('listening');
+              micBtn.innerHTML = '🔴';
+              micBtn.title = 'सुन रहा हूँ... बोलिए (Listening...)';
+            }
+            if (input) {
+              input.placeholder = (chatLang === 'hi' ? '🎤 सुन रहा हूँ... बोलिए...' : '🎤 Listening... Speak now...');
+            }
+          };
+
+          let finalTranscript = '';
+          recognition.onresult = function(event) {
+            let interim = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+              if (event.results[i].isFinal) {
+                finalTranscript += event.results[i][0].transcript;
+              } else {
+                interim += event.results[i][0].transcript;
+              }
+            }
+            if (input) {
+              if (interim) input.value = interim;
+              if (finalTranscript) input.value = finalTranscript.trim();
+            }
+          };
+
+          recognition.onerror = function(event) {
+            console.warn('Speech recognition error:', event.error);
+            stopListening(prevPlaceholder);
+          };
+
+          recognition.onend = function() {
+            stopListening(prevPlaceholder);
+            if (input && input.value.trim()) {
+              sendChat();
+            }
+          };
+
+          recognition.start();
+        } catch(err) {
+          console.error('Speech recognition start failed:', err);
+          stopListening();
+        }
+      }
+      window.toggleChatVoice = toggleChatVoice;
+
+      function stopListening(prevPlaceholder) {
+        isListening = false;
+        const micBtn = document.getElementById('chatVoiceMicBtn');
+        if (micBtn) {
+          micBtn.classList.remove('listening');
+          micBtn.innerHTML = '🎙️';
+          micBtn.title = 'बोलकर प्रश्न पूछें (Speak Question)';
+        }
+        const L = LANG[chatLang] || LANG.en;
+        if (input) {
+          input.placeholder = prevPlaceholder || L.placeholder;
+        }
+        if (recognition) {
+          try { recognition.stop(); } catch(e){}
+          recognition = null;
+        }
+      }
+
       function setChatLang(lang, syncPage = true) {
         chatLang = lang || 'en';
+        stopSpeaking();
+        stopListening();
         const sel = document.getElementById('chatLangDropdown');
         if (sel && sel.value !== chatLang) sel.value = chatLang;
         const L = LANG[chatLang] || LANG.en;
@@ -3493,7 +3773,7 @@
           if (msgs) {
             msgs.innerHTML = '';
             addDatePill();
-            setTimeout(function(){ addBotMsg(L.greeting); }, 150);
+            setTimeout(function(){ addBotMsg(L.greeting, audioEnabled); }, 150);
           }
         }
         if (syncPage && typeof setLanguage === 'function' && typeof currentLang !== 'undefined' && currentLang !== chatLang) {
@@ -3511,8 +3791,12 @@
         }).join('');
       }
 
-      function toggleChat() {
-        chatOpen = !chatOpen;
+      function toggleChat(forceOpen, startMic) {
+        if (typeof forceOpen === 'boolean') {
+          chatOpen = forceOpen;
+        } else {
+          chatOpen = !chatOpen;
+        }
         panel.classList.toggle('open', chatOpen);
         document.body.classList.toggle('chat-open', chatOpen);
         fab.style.transform = chatOpen ? 'scale(.9)' : '';
@@ -3520,6 +3804,8 @@
           ? '✕<span class="fab-badge" id="fabBadge" style="display:none">1</span>'
           : '🤖<span class="fab-badge" id="fabBadge" style="display:none">1</span>';
         if (badge) badge.style.display = 'none';
+        updateAudioBtnUI();
+
         if (chatOpen && msgs && msgs.children.length === 0) {
           const L = LANG[chatLang] || LANG.en;
           if (input) input.placeholder = L.placeholder;
@@ -3527,10 +3813,19 @@
           if (statusEl) statusEl.textContent = L.status;
           renderChips(L.chips);
           addDatePill();
-          setTimeout(function(){ addBotMsg(L.greeting); }, 200);
+          setTimeout(function(){ addBotMsg(L.greeting, audioEnabled); }, 200);
         }
         if (chatOpen && input) {
-          setTimeout(function(){ input.focus(); }, 150);
+          setTimeout(function(){ 
+            input.focus(); 
+            if (startMic) {
+              toggleChatVoice();
+            }
+          }, 200);
+        }
+        if (!chatOpen) {
+          stopSpeaking();
+          stopListening();
         }
       }
       window.toggleChat = toggleChat;
@@ -3539,18 +3834,41 @@
         if (e.key === 'Escape' && chatOpen) toggleChat();
       });
 
-      function addBotMsg(text) {
+      function addBotMsg(text, autoSpeak = true) {
         const div = document.createElement('div');
         div.className = 'msg bot';
         const now = new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+        const msgId = 'botMsg_' + Date.now() + '_' + Math.floor(Math.random()*1000);
+
         div.innerHTML =
           '<div class="msg-avatar">🌾</div>' +
           '<div class="msg-bubble-wrap">' +
             '<div class="msg-bubble">' + renderMd(text) + '</div>' +
-            '<div class="msg-time"><span>' + now + '</span></div>' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:2px;">' +
+              '<div class="msg-time"><span>' + now + '</span></div>' +
+              '<button id="' + msgId + '_speak" class="msg-audio-play-btn" type="button" title="Listen with human voice (आवाज़ में सुनें)">' +
+                '<span class="audio-btn-icon">🔊</span> <span class="audio-btn-label">' + (chatLang === 'hi' ? 'सुनें' : 'Listen') + '</span>' +
+              '</button>' +
+            '</div>' +
           '</div>';
         msgs.appendChild(div);
         scrollBottom();
+
+        const speakBtn = document.getElementById(msgId + '_speak');
+        if (speakBtn) {
+          speakBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (isSpeaking && activeSpeakBtn === speakBtn) {
+              stopSpeaking();
+            } else {
+              speakText(text, speakBtn);
+            }
+          });
+        }
+
+        if (autoSpeak && audioEnabled) {
+          speakText(text, speakBtn);
+        }
       }
 
       function addUserMsg(text) {
@@ -3602,6 +3920,7 @@
       async function sendChat() {
         const msg = input.value.trim();
         if (!msg || awaitingReply) return;
+        stopSpeaking();
         input.value = '';
         sendBtn.disabled = true;
         awaitingReply = true;
@@ -3620,13 +3939,13 @@
           hideTyping();
           const L = LANG[chatLang] || LANG.en;
           const reply = data.reply || L.fallback;
-          addBotMsg(reply);
+          addBotMsg(reply, audioEnabled);
           chatHistory.push({ role: 'user', content: msg });
           chatHistory.push({ role: 'assistant', content: reply });
         } catch(e) {
           hideTyping();
           const L = LANG[chatLang] || LANG.en;
-          addBotMsg(L.netError || '⚠️ Network error. Please call our helpline: **1800-270-0224** (Toll Free).');
+          addBotMsg(L.netError || '⚠️ Network error. Please call our helpline: **1800-270-0224** (Toll Free).', false);
         }
 
         awaitingReply = false;
@@ -3638,15 +3957,15 @@
       function sendQuick(msg) { input.value = msg; sendChat(); }
       window.sendQuick = sendQuick;
 
+      // Initialize voice audio button state
+      updateAudioBtnUI();
+
       // Show badge after 3s
       setTimeout(function() {
         if (!chatOpen) badge.style.display = 'flex';
       }, 3000);
     })();
   </script>
-
-  <!-- 🌾 Kisan AI Voice Assistant (कृषि मित्र) -->
-  <script src="/js/kisan-ai.js"></script>
 
 </body>
 

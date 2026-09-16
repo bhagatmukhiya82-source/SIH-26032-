@@ -62,6 +62,8 @@
   let recognition = null;
 
   function initUI() {
+    // Merged into main chatbot in index.html
+    return;
     // Inject Styles
     const style = document.createElement('style');
     style.innerHTML = `
