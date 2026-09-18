@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>KISAN-Q: Smart Slot Booking & e-NAM Mandi Procurement</title>
+  <link rel="icon" type="image/svg+xml" href="/images/kisan_q_icon.svg">
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Chart.js CDN -->
@@ -58,7 +59,7 @@
         <button onclick="openAppDownloadModal()" class="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold rounded-lg text-xs flex items-center gap-1 transition border border-amber-400/40" title="Scan QR Code with Phone or View Install Guide">
           <i data-lucide="qr-code" class="w-3.5 h-3.5"></i> 📱 Phone QR & Guide
         </button>
-        <button onclick="toggleChat(true, true)" class="px-3 py-1 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-amber-300 hover:text-white font-black rounded-lg text-xs flex items-center gap-1.5 transition border border-emerald-400/80 shadow-md transform hover:scale-105" title="Open Kisan AI Voice Assistant">
+        <button onclick="toggleChat(true)" class="px-3 py-1 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-amber-300 hover:text-white font-black rounded-lg text-xs flex items-center gap-1.5 transition border border-emerald-400/80 shadow-md transform hover:scale-105" title="Open Kisan AI Voice Assistant">
           <span>🎙️</span> कृषि मित्र (AI Voice Chat)
         </button>
       </div>
@@ -3617,6 +3618,10 @@
         if (!clean) return;
 
         try {
+          if (window.speechSynthesis.paused) {
+            window.speechSynthesis.resume();
+          }
+
           const utter = new SpeechSynthesisUtterance(clean);
           const voice = getBestVoice(chatLang);
           if (voice) utter.voice = voice;
@@ -3639,7 +3644,15 @@
           utter.onend = function() { stopSpeaking(); };
           utter.onerror = function() { stopSpeaking(); };
 
-          window.speechSynthesis.speak(utter);
+          setTimeout(function() {
+            try {
+              if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+              window.speechSynthesis.speak(utter);
+            } catch(e) {
+              console.warn('speak failed:', e);
+              stopSpeaking();
+            }
+          }, 60);
         } catch(e) {
           console.warn('Speech synthesis error:', e);
           stopSpeaking();
@@ -3662,13 +3675,25 @@
       }
       window.stopSpeaking = stopSpeaking;
 
+      function addSystemNotice(html) {
+        if (!msgs) return;
+        const div = document.createElement('div');
+        div.className = 'msg-system-notice';
+        div.style.cssText = 'text-align:center;margin:6px 12px;padding:8px 12px;background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:12px;font-size:0.75rem;line-height:1.4;box-shadow:0 1px 4px rgba(0,0,0,0.05);';
+        div.innerHTML = html;
+        msgs.appendChild(div);
+        scrollBottom();
+      }
+
       // ── Speech Recognition (Voice Input) ──
-      function toggleChatVoice() {
+      async function toggleChatVoice() {
         const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRec) {
-          alert(chatLang === 'hi' 
-            ? 'आपके ब्राउज़र में वॉइस इनपुट उपलब्ध नहीं है। कृपया Chrome या Edge का उपयोग करें।' 
-            : 'Voice input is not supported in this browser. Please use Google Chrome or Microsoft Edge.');
+          addSystemNotice(
+            chatLang === 'hi' 
+              ? 'ℹ️ आपके ब्राउज़र में वेब वॉइस रिकॉग्निशन सपोर्ट नहीं है। कृपया Google Chrome या Microsoft Edge का उपयोग करें।' 
+              : 'ℹ️ Web voice recognition is not supported in this browser. Please use Google Chrome or Microsoft Edge.'
+          );
           return;
         }
 
@@ -3679,6 +3704,22 @@
         }
 
         stopSpeaking();
+
+        // Request audio device access if available
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream.getTracks().forEach(t => t.stop());
+          } catch(permErr) {
+            console.warn('Microphone permission blocked:', permErr);
+            addSystemNotice(
+              chatLang === 'hi'
+                ? '⚠️ <b>माइक्रोफ़ोन अनुमति ब्लॉक है:</b> कृपया ब्राउज़र एड्रेस बार में लॉक (🔒) या माइक आइकन पर क्लिक करके <b>Allow (अनुमति दें)</b> करें, फिर दोबारा 🎙️ दबाएं।'
+                : '⚠️ <b>Microphone blocked:</b> Please click the lock (🔒) icon in your browser address bar, set Microphone to <b>Allow</b>, then click 🎙️ again.'
+            );
+            return;
+          }
+        }
 
         try {
           recognition = new SpeechRec();
@@ -3721,6 +3762,19 @@
           recognition.onerror = function(event) {
             console.warn('Speech recognition error:', event.error);
             stopListening(prevPlaceholder);
+            if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+              addSystemNotice(
+                chatLang === 'hi'
+                  ? '⚠️ <b>माइक्रोफ़ोन अनुमति ब्लॉक है:</b> कृपया ब्राउज़र एड्रेस बार में लॉक (🔒) आइकन पर क्लिक करके Microphone को <b>Allow (अनुमति दें)</b> करें।'
+                  : '⚠️ <b>Microphone blocked:</b> Please click the lock (🔒) icon in your browser address bar and select <b>Allow Microphone</b>.'
+              );
+            } else if (event.error === 'no-speech') {
+              addSystemNotice(
+                chatLang === 'hi'
+                  ? 'ℹ️ कोई आवाज़ नहीं सुनाई दी। कृपया माइक बटन (🎙️) दबाकर दोबारा बोलें।'
+                  : 'ℹ️ No speech detected. Please click the mic button (🎙️) and try speaking again.'
+              );
+            }
           };
 
           recognition.onend = function() {
@@ -3786,12 +3840,14 @@
         const qr = document.getElementById('quickReplies');
         if (!qr) return;
         qr.style.display = 'flex';
-        qr.innerHTML = (chips || []).map(function(c){
-          return '<button class="quick-chip" onclick="sendQuick(\'' + c.msg.replace(/'/g,"\\'") + '\')">' + c.label + '</button>';
+        const L = LANG[chatLang] || LANG.en;
+        const list = (chips && chips.length > 0) ? chips : (L.chips || []);
+        qr.innerHTML = list.map(function(c){
+          return '<button class="quick-chip" type="button" onclick="sendQuick(\'' + c.msg.replace(/'/g,"\\'") + '\')">' + c.label + '</button>';
         }).join('');
       }
 
-      function toggleChat(forceOpen, startMic) {
+      function toggleChat(forceOpen) {
         if (typeof forceOpen === 'boolean') {
           chatOpen = forceOpen;
         } else {
@@ -3806,24 +3862,22 @@
         if (badge) badge.style.display = 'none';
         updateAudioBtnUI();
 
-        if (chatOpen && msgs && msgs.children.length === 0) {
+        if (chatOpen) {
           const L = LANG[chatLang] || LANG.en;
           if (input) input.placeholder = L.placeholder;
           const statusEl = document.getElementById('chatStatusText');
           if (statusEl) statusEl.textContent = L.status;
           renderChips(L.chips);
-          addDatePill();
-          setTimeout(function(){ addBotMsg(L.greeting, audioEnabled); }, 200);
-        }
-        if (chatOpen && input) {
-          setTimeout(function(){ 
-            input.focus(); 
-            if (startMic) {
-              toggleChatVoice();
-            }
-          }, 200);
-        }
-        if (!chatOpen) {
+          renderTopics(L.topics, L.topicPlaceholder);
+
+          if (msgs && msgs.children.length === 0) {
+            addDatePill();
+            setTimeout(function(){ addBotMsg(L.greeting, audioEnabled); }, 200);
+          }
+          if (input) {
+            setTimeout(function(){ input.focus(); }, 150);
+          }
+        } else {
           stopSpeaking();
           stopListening();
         }
@@ -3924,7 +3978,6 @@
         input.value = '';
         sendBtn.disabled = true;
         awaitingReply = true;
-        document.getElementById('quickReplies').style.display = 'none';
 
         addUserMsg(msg);
         showTyping();
@@ -3942,10 +3995,18 @@
           addBotMsg(reply, audioEnabled);
           chatHistory.push({ role: 'user', content: msg });
           chatHistory.push({ role: 'assistant', content: reply });
+
+          // Keep quick reply choices visible so farmer can click next question!
+          renderChips(L.chips);
+          const qr = document.getElementById('quickReplies');
+          if (qr) qr.style.display = 'flex';
         } catch(e) {
           hideTyping();
           const L = LANG[chatLang] || LANG.en;
           addBotMsg(L.netError || '⚠️ Network error. Please call our helpline: **1800-270-0224** (Toll Free).', false);
+          renderChips(L.chips);
+          const qr = document.getElementById('quickReplies');
+          if (qr) qr.style.display = 'flex';
         }
 
         awaitingReply = false;

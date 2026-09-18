@@ -22,6 +22,10 @@ app.use((err, req, res, next) => {
   next(err);
 });
 
+app.get("/favicon.ico", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "images", "kisan_q_icon.svg"));
+});
+
 // =========================================================================
 // EXPLICIT MOBILE APP APK & RESOURCE DOWNLOAD ENDPOINTS
 // Guaranteed Content-Disposition: attachment for 1-click mobile download
