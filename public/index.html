@@ -3093,15 +3093,19 @@
     }
 
     .msg-audio-play-btn {
-      background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 12px;
-      padding: 3px 8px; font-size: 0.65rem; font-weight: 700; color: #166534;
-      cursor: pointer; display: inline-flex; align-items: center; gap: 4px;
-      margin-top: 6px; transition: all .15s; line-height: 1.2;
+      background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 16px;
+      padding: 4px 10px; font-size: 0.7rem; font-weight: 700; color: #15803d;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
+      margin-top: 6px; transition: all .2s cubic-bezier(.34,1.56,.64,1); line-height: 1.2;
+      box-shadow: 0 1px 3px rgba(22, 163, 74, 0.12);
     }
-    .msg-audio-play-btn:hover { background: #dcfce7; border-color: #16a34a; }
+    .msg-audio-play-btn:hover {
+      background: #dcfce7; border-color: #16a34a; transform: translateY(-1px) scale(1.03);
+      box-shadow: 0 3px 8px rgba(22, 163, 74, 0.25);
+    }
     .msg-audio-play-btn.speaking {
       background: #fef08a; border-color: #f59e0b; color: #854d0e;
-      box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
     }
 
     @media (max-width: 440px) {
@@ -3522,7 +3526,8 @@
       }
 
       // ── Audio & Voice Assistant State ──
-      let audioEnabled = localStorage.getItem('kisanChatAudio') !== 'false'; // default enabled
+      // Default: AI voice only plays when explicitly clicked by user
+      let autoSpeakEnabled = localStorage.getItem('kisanChatAutoSpeak') === 'true'; // default false
       let isListening = false;
       let isSpeaking = false;
       let recognition = null;
@@ -3542,19 +3547,19 @@
       function updateAudioBtnUI() {
         const btn = document.getElementById('chatVoiceToggleBtn');
         if (btn) {
-          btn.innerHTML = audioEnabled ? '🔊' : '🔇';
-          btn.classList.toggle('muted', !audioEnabled);
-          btn.title = audioEnabled 
-            ? 'Human Voice Output: ON (Click to mute)' 
-            : 'Human Voice Output: OFF (Click to unmute)';
+          btn.innerHTML = autoSpeakEnabled ? '🔊' : '🔇';
+          btn.classList.toggle('muted', !autoSpeakEnabled);
+          btn.title = autoSpeakEnabled 
+            ? (chatLang === 'hi' ? 'ऑटो-स्पीक ऑन: AI हर संदेश खुद बोलेगा (क्लिक करके बंद करें)' : 'Auto-Speak: ON (Click to only speak when clicked)') 
+            : (chatLang === 'hi' ? 'ऑटो-स्पीक ऑफ: AI केवल "सुनें" दबाने पर बोलेगा (क्लिक करके ऑन करें)' : 'Auto-Speak: OFF (AI speaks only when you click Listen)');
         }
       }
 
       function toggleChatAudio() {
-        audioEnabled = !audioEnabled;
-        localStorage.setItem('kisanChatAudio', audioEnabled ? 'true' : 'false');
+        autoSpeakEnabled = !autoSpeakEnabled;
+        localStorage.setItem('kisanChatAutoSpeak', autoSpeakEnabled ? 'true' : 'false');
         updateAudioBtnUI();
-        if (!audioEnabled) {
+        if (!autoSpeakEnabled) {
           stopSpeaking();
         }
       }
@@ -3612,9 +3617,9 @@
 
       let currentAudio = null;
 
-      async function speakText(text, btnElement) {
+      async function speakText(text, btnElement, isAuto = false) {
         stopSpeaking();
-        if (!audioEnabled) return;
+        if (isAuto && !autoSpeakEnabled) return;
 
         isSpeaking = true;
         activeSpeakBtn = btnElement || null;
@@ -3859,11 +3864,11 @@
           if (statusEl) statusEl.textContent = L.status;
           renderChips(L.chips);
           renderTopics(L.topics, L.topicPlaceholder);
-          // Clear and show new language greeting
+          // Clear and show new language greeting (silent by default, speaks only when clicked)
           if (msgs) {
             msgs.innerHTML = '';
             addDatePill();
-            setTimeout(function(){ addBotMsg(L.greeting, audioEnabled); }, 150);
+            setTimeout(function(){ addBotMsg(L.greeting, false); }, 150);
           }
         }
         if (syncPage && typeof setLanguage === 'function' && typeof currentLang !== 'undefined' && currentLang !== chatLang) {
@@ -3908,7 +3913,7 @@
 
           if (msgs && msgs.children.length === 0) {
             addDatePill();
-            setTimeout(function(){ addBotMsg(L.greeting, audioEnabled); }, 200);
+            setTimeout(function(){ addBotMsg(L.greeting, false); }, 200);
           }
           if (input) {
             setTimeout(function(){ input.focus(); }, 150);
@@ -3924,7 +3929,7 @@
         if (e.key === 'Escape' && chatOpen) toggleChat();
       });
 
-      function addBotMsg(text, autoSpeak = true) {
+      function addBotMsg(text, autoSpeak = false) {
         const div = document.createElement('div');
         div.className = 'msg bot';
         const now = new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
@@ -3936,7 +3941,7 @@
             '<div class="msg-bubble">' + renderMd(text) + '</div>' +
             '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:2px;">' +
               '<div class="msg-time"><span>' + now + '</span></div>' +
-              '<button id="' + msgId + '_speak" class="msg-audio-play-btn" type="button" title="Listen with human voice (आवाज़ में सुनें)">' +
+              '<button id="' + msgId + '_speak" class="msg-audio-play-btn" type="button" title="क्लिक करके आवाज़ में सुनें (Click to listen in human voice)">' +
                 '<span class="audio-btn-icon">🔊</span> <span class="audio-btn-label">' + (chatLang === 'hi' ? 'सुनें' : 'Listen') + '</span>' +
               '</button>' +
             '</div>' +
@@ -3951,13 +3956,13 @@
             if (isSpeaking && activeSpeakBtn === speakBtn) {
               stopSpeaking();
             } else {
-              speakText(text, speakBtn);
+              speakText(text, speakBtn, false); // Explicit user click - ALWAYS speaks!
             }
           });
         }
 
-        if (autoSpeak && audioEnabled) {
-          speakText(text, speakBtn);
+        if (autoSpeak && autoSpeakEnabled) {
+          speakText(text, speakBtn, true);
         }
       }
 
@@ -4028,7 +4033,7 @@
           hideTyping();
           const L = LANG[chatLang] || LANG.en;
           const reply = data.reply || L.fallback;
-          addBotMsg(reply, audioEnabled);
+          addBotMsg(reply, autoSpeakEnabled);
           chatHistory.push({ role: 'user', content: msg });
           chatHistory.push({ role: 'assistant', content: reply });
 
