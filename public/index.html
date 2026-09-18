@@ -3108,6 +3108,79 @@
       box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
     }
 
+    /* ── Live Voice Visualizer & Overlay ── */
+    .voice-listening-overlay {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 12px;
+      background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+      border-top: 1.5px solid #86efac;
+      border-bottom: 1px solid #dcfce7;
+      animation: voiceSlideUp .2s ease-out;
+    }
+    @keyframes voiceSlideUp {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .voice-wave-bars {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      height: 22px;
+      min-width: 24px;
+    }
+    .voice-wave-bars .vbar {
+      display: inline-block;
+      width: 3.5px;
+      height: 6px;
+      background: #16a34a;
+      border-radius: 4px;
+      transition: height 0.08s ease;
+    }
+    .voice-live-caption {
+      flex: 1;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #15803d;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .voice-done-btn {
+      background: #16a34a;
+      color: #ffffff;
+      border: none;
+      border-radius: 16px;
+      padding: 4px 10px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      box-shadow: 0 1px 4px rgba(22, 163, 74, 0.3);
+      transition: transform .15s, background .15s;
+    }
+    .voice-done-btn:hover {
+      background: #15803d;
+      transform: scale(1.04);
+    }
+    .voice-cancel-btn {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 0.85rem;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 50%;
+    }
+    .voice-cancel-btn:hover {
+      color: #ef4444;
+      background: #fee2e2;
+    }
+
     @media (max-width: 440px) {
       #chatPanel { width: calc(100vw - 24px); right: 12px; bottom: 84px; height: calc(100vh - 100px); max-height: calc(100vh - 100px); border-radius: 18px; }
       #chatFab { right: 16px; bottom: 16px; }
@@ -3260,6 +3333,16 @@
 
     <!-- Quick Reply Chips -->
     <div class="quick-replies" id="quickReplies"></div>
+
+    <!-- Live Voice Visualizer & Listening Overlay -->
+    <div id="voiceListeningOverlay" class="voice-listening-overlay" style="display:none;">
+      <div class="voice-wave-bars" id="voiceWaveBars">
+        <span class="vbar"></span><span class="vbar"></span><span class="vbar"></span><span class="vbar"></span><span class="vbar"></span>
+      </div>
+      <div id="voiceLiveCaption" class="voice-live-caption">🎤 सुन रहा हूँ... बोलिए... (Listening...)</div>
+      <button id="voiceDoneBtn" type="button" class="voice-done-btn" onclick="finishVoiceInput()">✓ Send (भेजें)</button>
+      <button type="button" class="voice-cancel-btn" onclick="cancelVoiceInput()" title="Cancel voice input">✕</button>
+    </div>
 
     <!-- Input Area -->
     <div class="chat-input-area">
@@ -3726,129 +3809,295 @@
         scrollBottom();
       }
 
-      // ── Speech Recognition (Voice Input) ──
-      async function toggleChatVoice() {
-        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRec) {
-          addSystemNotice(
-            chatLang === 'hi' 
-              ? 'ℹ️ आपके ब्राउज़र में वेब वॉइस रिकॉग्निशन सपोर्ट नहीं है। कृपया Google Chrome या Microsoft Edge का उपयोग करें।' 
-              : 'ℹ️ Web voice recognition is not supported in this browser. Please use Google Chrome or Microsoft Edge.'
-          );
-          return;
-        }
+      // ── Microphone & Audio State ──
+      let activeMicStream = null;
+      let mediaRecorder = null;
+      let recordedChunks = [];
+      let audioCtx = null;
+      let analyser = null;
+      let animFrameId = null;
+      let speechSilenceTimer = null;
+      let lastSpokenText = '';
 
-        const micBtn = document.getElementById('chatVoiceMicBtn');
-        if (isListening) {
-          stopListening();
-          return;
-        }
+      function setupAudioVisualizer() {
+        if (!activeMicStream) return;
+        try {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContext) return;
+          audioCtx = new AudioContext();
+          analyser = audioCtx.createAnalyser();
+          analyser.fftSize = 64;
+          const source = audioCtx.createMediaStreamSource(activeMicStream);
+          source.connect(analyser);
 
-        stopSpeaking();
+          const dataArray = new Uint8Array(analyser.frequencyBinCount);
+          const bars = document.querySelectorAll('#voiceWaveBars .vbar');
 
-        // Request audio device access if available
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-          try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            stream.getTracks().forEach(t => t.stop());
-          } catch(permErr) {
-            console.warn('Microphone permission blocked:', permErr);
-            addSystemNotice(
-              chatLang === 'hi'
-                ? '⚠️ <b>माइक्रोफ़ोन अनुमति ब्लॉक है:</b> कृपया ब्राउज़र एड्रेस बार में लॉक (🔒) या माइक आइकन पर क्लिक करके <b>Allow (अनुमति दें)</b> करें, फिर दोबारा 🎙️ दबाएं।'
-                : '⚠️ <b>Microphone blocked:</b> Please click the lock (🔒) icon in your browser address bar, set Microphone to <b>Allow</b>, then click 🎙️ again.'
-            );
-            return;
+          function renderBars() {
+            if (!isListening || !analyser) return;
+            analyser.getByteFrequencyData(dataArray);
+            let sum = 0;
+            for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+            const avg = sum / dataArray.length;
+
+            bars.forEach((bar, idx) => {
+              const val = dataArray[idx * 3] || avg;
+              const h = Math.max(6, Math.min(22, (val / 255) * 28));
+              bar.style.height = h + 'px';
+            });
+            animFrameId = requestAnimationFrame(renderBars);
           }
+          renderBars();
+        } catch(e) {
+          console.warn('Audio visualizer setup note:', e);
         }
+      }
+
+      function setupMediaRecorder() {
+        if (!activeMicStream || typeof MediaRecorder === 'undefined') return;
+        try {
+          const mimeTypes = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'];
+          let supportedType = mimeTypes.find(t => MediaRecorder.isTypeSupported(t)) || '';
+          mediaRecorder = supportedType ? new MediaRecorder(activeMicStream, { mimeType: supportedType }) : new MediaRecorder(activeMicStream);
+          recordedChunks = [];
+          mediaRecorder.ondataavailable = function(e) {
+            if (e.data && e.data.size > 0) recordedChunks.push(e.data);
+          };
+          mediaRecorder.start(200);
+        } catch(recErr) {
+          console.warn('MediaRecorder setup note:', recErr);
+        }
+      }
+
+      function setupSpeechRecognition() {
+        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRec) return;
 
         try {
           recognition = new SpeechRec();
-          recognition.continuous = false;
+          recognition.continuous = true;
           recognition.interimResults = true;
 
           const langMap = { en: 'en-IN', hi: 'hi-IN', pa: 'pa-IN', mr: 'mr-IN', gu: 'gu-IN', bn: 'bn-IN', te: 'te-IN', ta: 'ta-IN', kn: 'kn-IN' };
           recognition.lang = langMap[chatLang] || 'hi-IN';
 
-          const prevPlaceholder = input ? input.placeholder : '';
-
-          recognition.onstart = function() {
-            isListening = true;
-            if (micBtn) {
-              micBtn.classList.add('listening');
-              micBtn.innerHTML = '🔴';
-              micBtn.title = 'सुन रहा हूँ... बोलिए (Listening...)';
-            }
-            if (input) {
-              input.placeholder = (chatLang === 'hi' ? '🎤 सुन रहा हूँ... बोलिए...' : '🎤 Listening... Speak now...');
-            }
-          };
-
-          let finalTranscript = '';
           recognition.onresult = function(event) {
-            let interim = '';
-            for (let i = event.resultIndex; i < event.results.length; ++i) {
+            let fullText = '';
+            let interimText = '';
+            for (let i = 0; i < event.results.length; ++i) {
               if (event.results[i].isFinal) {
-                finalTranscript += event.results[i][0].transcript;
+                fullText += event.results[i][0].transcript + ' ';
               } else {
-                interim += event.results[i][0].transcript;
+                interimText += event.results[i][0].transcript;
               }
             }
-            if (input) {
-              if (interim) input.value = interim;
-              if (finalTranscript) input.value = finalTranscript.trim();
+            const currentSpoken = (fullText + interimText).trim();
+            if (currentSpoken) {
+              lastSpokenText = currentSpoken;
+              if (input) input.value = currentSpoken;
+              const cap = document.getElementById('voiceLiveCaption');
+              if (cap) cap.innerHTML = '🎤 &ldquo;' + escHtml(currentSpoken) + '&rdquo;';
+
+              // Auto-send after 1.8 seconds of silence once speech is detected
+              if (speechSilenceTimer) clearTimeout(speechSilenceTimer);
+              speechSilenceTimer = setTimeout(function() {
+                if (isListening && lastSpokenText.trim()) {
+                  finishVoiceInput();
+                }
+              }, 1800);
             }
           };
 
           recognition.onerror = function(event) {
-            console.warn('Speech recognition error:', event.error);
-            stopListening(prevPlaceholder);
-            if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+            console.warn('Speech recognition event:', event.error);
+            if (event.error === 'not-allowed') {
               addSystemNotice(
                 chatLang === 'hi'
-                  ? '⚠️ <b>माइक्रोफ़ोन अनुमति ब्लॉक है:</b> कृपया ब्राउज़र एड्रेस बार में लॉक (🔒) आइकन पर क्लिक करके Microphone को <b>Allow (अनुमति दें)</b> करें।'
-                  : '⚠️ <b>Microphone blocked:</b> Please click the lock (🔒) icon in your browser address bar and select <b>Allow Microphone</b>.'
+                  ? '⚠️ <b>माइक्रोफ़ोन अनुमति ब्लॉक है:</b> कृपया ब्राउज़र एड्रेस बार में लॉक (🔒) आइकन पर क्लिक करके Microphone को Allow करें।'
+                  : '⚠️ <b>Microphone blocked:</b> Please click lock (🔒) in your address bar and allow microphone.'
               );
-            } else if (event.error === 'no-speech') {
-              addSystemNotice(
-                chatLang === 'hi'
-                  ? 'ℹ️ कोई आवाज़ नहीं सुनाई दी। कृपया माइक बटन (🎙️) दबाकर दोबारा बोलें।'
-                  : 'ℹ️ No speech detected. Please click the mic button (🎙️) and try speaking again.'
-              );
+              stopListening();
             }
           };
 
           recognition.onend = function() {
-            stopListening(prevPlaceholder);
-            if (input && input.value.trim()) {
-              sendChat();
+            // Keep active while isListening is true
+            if (isListening && recognition) {
+              try { recognition.start(); } catch(e){}
             }
           };
 
           recognition.start();
-        } catch(err) {
-          console.error('Speech recognition start failed:', err);
-          stopListening();
+        } catch(e) {
+          console.warn('Speech recognition init note:', e);
         }
+      }
+
+      async function toggleChatVoice() {
+        if (isListening) {
+          finishVoiceInput();
+          return;
+        }
+
+        stopSpeaking();
+        lastSpokenText = '';
+        recordedChunks = [];
+
+        // 1. Request microphone access and keep stream open
+        try {
+          if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            activeMicStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          }
+        } catch(permErr) {
+          console.warn('Microphone permission blocked:', permErr);
+          addSystemNotice(
+            chatLang === 'hi'
+              ? '⚠️ <b>माइक्रोफ़ोन अनुमति ब्लॉक है:</b> कृपया ब्राउज़र एड्रेस बार में लॉक (🔒) आइकन पर क्लिक करके <b>Allow (अनुमति दें)</b> करें, फिर दोबारा 🎙️ दबाएं।'
+              : '⚠️ <b>Microphone blocked:</b> Please click the lock (🔒) icon in your browser address bar, set Microphone to <b>Allow</b>, then click 🎙️ again.'
+          );
+          return;
+        }
+
+        isListening = true;
+
+        // 2. Setup live soundwave visualizer
+        setupAudioVisualizer();
+
+        // 3. Setup MediaRecorder for fallback transcription
+        setupMediaRecorder();
+
+        // 4. Setup Browser Speech Recognition
+        setupSpeechRecognition();
+
+        // 5. Update UI
+        updateListeningUI(true);
       }
       window.toggleChatVoice = toggleChatVoice;
 
-      function stopListening(prevPlaceholder) {
-        isListening = false;
-        const micBtn = document.getElementById('chatVoiceMicBtn');
-        if (micBtn) {
-          micBtn.classList.remove('listening');
-          micBtn.innerHTML = '🎙️';
-          micBtn.title = 'बोलकर प्रश्न पूछें (Speak Question)';
+      async function finishVoiceInput() {
+        if (!isListening) return;
+        if (speechSilenceTimer) { clearTimeout(speechSilenceTimer); speechSilenceTimer = null; }
+
+        const capturedText = (input ? input.value.trim() : '') || lastSpokenText.trim();
+        
+        // Stop audio devices
+        stopListening();
+
+        // Engine A: If SpeechRecognition captured words, submit directly!
+        if (capturedText) {
+          sendChat();
+          return;
         }
-        const L = LANG[chatLang] || LANG.en;
-        if (input) {
-          input.placeholder = prevPlaceholder || L.placeholder;
+
+        // Engine B: Fallback to server audio transcription via Gemini 3.6 Flash
+        if (recordedChunks.length > 0) {
+          const blob = new Blob(recordedChunks, { type: recordedChunks[0]?.type || 'audio/webm' });
+          if (blob.size > 1500) {
+            addSystemNotice(
+              chatLang === 'hi'
+                ? '🔄 <b>आवाज़ समझी जा रही है... (Processing speech...)</b>'
+                : '🔄 <b>Processing speech with AI...</b>'
+            );
+            try {
+              const base64 = await blobToBase64(blob);
+              const resp = await fetch('/api/transcribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ audioBase64: base64, mimeType: blob.type || 'audio/webm', lang: chatLang })
+              });
+              const data = await resp.json();
+              if (data.text && data.text.trim()) {
+                if (input) input.value = data.text.trim();
+                sendChat();
+                return;
+              }
+            } catch(transErr) {
+              console.warn('Transcription fetch failed:', transErr);
+            }
+          }
+        }
+
+        // Neither captured speech
+        addSystemNotice(
+          chatLang === 'hi'
+            ? 'ℹ️ कोई स्पष्ट आवाज़ नहीं सुनाई दी। कृपया माइक बटन (🎙️) दबाकर दोबारा बोलें या नीचे लिखें।'
+            : 'ℹ️ No clear speech detected. Please click the mic button (🎙️) and try speaking again.'
+        );
+      }
+      window.finishVoiceInput = finishVoiceInput;
+
+      function cancelVoiceInput() {
+        if (speechSilenceTimer) { clearTimeout(speechSilenceTimer); speechSilenceTimer = null; }
+        if (input) input.value = '';
+        lastSpokenText = '';
+        stopListening();
+      }
+      window.cancelVoiceInput = cancelVoiceInput;
+
+      function stopListening() {
+        isListening = false;
+        if (speechSilenceTimer) { clearTimeout(speechSilenceTimer); speechSilenceTimer = null; }
+        if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
+        if (audioCtx) { try { audioCtx.close(); } catch(e){} audioCtx = null; }
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+          try { mediaRecorder.stop(); } catch(e){}
+        }
+        if (activeMicStream) {
+          try { activeMicStream.getTracks().forEach(t => t.stop()); } catch(e){}
+          activeMicStream = null;
         }
         if (recognition) {
           try { recognition.stop(); } catch(e){}
           recognition = null;
         }
+        updateListeningUI(false);
+      }
+
+      function updateListeningUI(active) {
+        const micBtn = document.getElementById('chatVoiceMicBtn');
+        const overlay = document.getElementById('voiceListeningOverlay');
+        const L = LANG[chatLang] || LANG.en;
+
+        if (active) {
+          if (micBtn) {
+            micBtn.classList.add('listening');
+            micBtn.innerHTML = '🔴';
+            micBtn.title = 'सुन रहा हूँ... बोलिए (क्लिक करके भेजें / Click to send)';
+          }
+          if (overlay) {
+            overlay.style.display = 'flex';
+            const cap = document.getElementById('voiceLiveCaption');
+            if (cap) cap.innerHTML = chatLang === 'hi' ? '🎤 सुन रहा हूँ... बोलिए... (Listening...)' : '🎤 Listening... Speak now...';
+          }
+          if (input) {
+            input.placeholder = (chatLang === 'hi' ? '🎤 सुन रहा हूँ... बोलिए...' : '🎤 Listening... Speak now...');
+          }
+        } else {
+          if (micBtn) {
+            micBtn.classList.remove('listening');
+            micBtn.innerHTML = '🎙️';
+            micBtn.title = 'बोलकर प्रश्न पूछें (Speak Question)';
+          }
+          if (overlay) {
+            overlay.style.display = 'none';
+          }
+          if (input) {
+            input.placeholder = L.placeholder;
+          }
+        }
+      }
+
+      function blobToBase64(blob) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const dataUrl = reader.result;
+            const b64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
+            resolve(b64);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
       }
 
       function setChatLang(lang, syncPage = true) {

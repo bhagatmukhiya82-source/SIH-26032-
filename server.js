@@ -12,7 +12,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "25mb" }));
 // Catch and handle malformed JSON syntax errors in request bodies safely
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
@@ -1992,11 +1992,8 @@ Always address the farmer respectfully (e.g. Kisan ji). Format with bullet point
         }
       });
 
-      // Try gemini-3.5-flash-lite first, fallback to gemini-3.5-flash
-      let aiReply = await callGemini("models/gemini-3.5-flash-lite", geminiBody, aiKey);
-      if (!aiReply) {
-        aiReply = await callGemini("models/gemini-3.5-flash", geminiBody, aiKey);
-      }
+      // Use gemini-3.6-flash
+      let aiReply = await callGemini("models/gemini-3.6-flash", geminiBody, aiKey);
 
       if (aiReply && aiReply.trim()) {
         return res.json({ reply: aiReply.trim(), source: "gemini", lang: langKey });
@@ -2009,6 +2006,50 @@ Always address the farmer respectfully (e.g. Kisan ji). Format with bullet point
   // 3. Guaranteed localized fallback strictly in the chosen language
   const fallbackReply = MULTI_KB.fallback[langKey] || MULTI_KB.fallback.en;
   return res.json({ reply: fallbackReply, source: "multilingual_fallback", lang: langKey });
+});
+
+// =========================================================================
+// 🎙️ MULTIMODAL SPEECH-TO-TEXT AUDIO TRANSCRIPTION ENDPOINT
+// Supports instant fallback transcription via Gemini 3.6 Flash
+// =========================================================================
+app.post("/api/transcribe", async (req, res) => {
+  try {
+    const { audioBase64, mimeType = "audio/webm", lang = "hi" } = req.body;
+    if (!audioBase64) return res.status(400).json({ error: "audioBase64 is required" });
+
+    const aiKey = (process.env.AI_KEY || "").trim();
+    if (!aiKey) {
+      return res.json({ text: "" });
+    }
+
+    const langName = LANG_NAMES[lang] || "Hindi or English";
+    const geminiBody = JSON.stringify({
+      contents: [{
+        role: "user",
+        parts: [
+          {
+            inlineData: {
+              mimeType: mimeType.split(";")[0],
+              data: audioBase64
+            }
+          },
+          {
+            text: `You are an accurate speech-to-text transcriber for Indian farmers on e-NAM Smart Mandi. Transcribe the spoken query in ${langName}. Return ONLY the verbatim transcribed words without any preamble, notes, explanations, or quotes. If there is no discernible speech or only static, return empty string.`
+          }
+        ]
+      }],
+      generationConfig: {
+        temperature: 0.1,
+        maxOutputTokens: 120
+      }
+    });
+
+    const transcribed = await callGemini("models/gemini-3.6-flash", geminiBody, aiKey);
+    return res.json({ text: (transcribed || "").trim() });
+  } catch (err) {
+    console.warn("Server audio transcription error:", err.message);
+    return res.json({ text: "" });
+  }
 });
 
 // =========================================================================
