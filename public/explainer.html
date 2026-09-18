@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KISAN-Q • Motion Graphic Explainer Video (SIH 26032)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #030712;
+      color: #f3f4f6;
+      overflow-x: hidden;
+      user-select: none;
+    }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    
+    /* 16:9 Canvas Viewport */
+    #stage-container {
+      aspect-ratio: 16 / 9;
+      max-height: calc(100vh - 120px);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 40px rgba(16, 185, 129, 0.15);
+    }
+
+    /* Scanline overlay */
+    .scanlines {
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 255, 0, 0.03));
+      background-size: 100% 3px, 6px 100%;
+      pointer-events: none;
+    }
+
+    /* Glow utilities */
+    .glow-emerald { filter: drop-shadow(0 0 15px rgba(16, 185, 129, 0.6)); }
+    .glow-amber { filter: drop-shadow(0 0 15px rgba(245, 158, 11, 0.6)); }
+    .glow-red { filter: drop-shadow(0 0 15px rgba(239, 68, 68, 0.6)); }
+    
+    /* Smooth Keyframe Animations */
+    @keyframes pulseRadar {
+      0% { transform: scale(0.8); opacity: 0.8; }
+      100% { transform: scale(2.2); opacity: 0; }
+    }
+    .radar-pulse { animation: pulseRadar 2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite; }
+
+    @keyframes beamFlow {
+      0% { stroke-dashoffset: 200; }
+      100% { stroke-dashoffset: 0; }
+    }
+    .beam-line {
+      stroke-dasharray: 10, 10;
+      animation: beamFlow 1.2s linear infinite;
+    }
+
+    @keyframes floatPhone {
+      0%, 100% { transform: translateY(0px) rotate(-1deg); }
+      50% { transform: translateY(-8px) rotate(1deg); }
+    }
+    .floating-phone { animation: floatPhone 4s ease-in-out infinite; }
+
+    /* Custom Range Slider */
+    input[type=range] {
+      accent-color: #10b981;
+    }
+  </style>
+</head>
+<body class="flex flex-col items-center justify-between min-h-screen p-3 md:p-6 bg-slate-950">
+
+  <!-- Top Header Navigation & Controls -->
+  <header class="w-full max-w-7xl flex flex-wrap items-center justify-between gap-3 mb-2 px-2">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center font-black text-slate-950 text-base shadow-lg shadow-emerald-500/20">
+        KQ
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-sm font-black text-white tracking-wider uppercase">KISAN-Q Motion Graphic Explainer</h1>
+          <span class="bg-amber-400/20 text-amber-300 border border-amber-400/40 text-[9px] font-extrabold px-1.5 py-0.5 rounded">SIH 26032</span>
+          <span class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[9px] font-mono px-1.5 py-0.5 rounded">1080p 60fps</span>
+        </div>
+        <p class="text-[11px] text-slate-400">Automated e-NAM 2.0 Smart Mandi Logistics & Multilingual Voice AI</p>
+      </div>
+    </div>
+
+    <!-- Quick Action Buttons -->
+    <div class="flex items-center gap-2">
+      <button id="btnVoiceToggle" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-emerald-300 text-xs font-bold rounded-lg border border-slate-700 transition flex items-center gap-1.5 shadow-sm">
+        <span id="voiceIcon">🔊</span>
+        <span id="voiceLabel">Voiceover: ON</span>
+      </button>
+
+      <button id="btnNotesToggle" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold rounded-lg border border-slate-700 transition flex items-center gap-1.5 shadow-sm">
+        <span>🎬</span> DaVinci Notes
+      </button>
+
+      <button id="btnRecord" class="px-4 py-1.5 bg-red-600 hover:bg-red-500 text-white text-xs font-black rounded-lg transition flex items-center gap-1.5 shadow-lg shadow-red-600/30">
+        <span class="w-2 h-2 rounded-full bg-white animate-ping"></span>
+        <span id="recordLabel">Record MP4/WebM</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main 16:9 Motion Graphic Stage -->
+  <main id="stage-container" class="w-full max-w-7xl relative bg-slate-900 rounded-2xl overflow-hidden border border-slate-800/80 flex items-center justify-center">
+    
+    <!-- Motion Canvas for Dynamic Rendering (Particles, Radars, Beams, Counters) -->
+    <canvas id="motionCanvas" width="1920" height="1080" class="absolute inset-0 w-full h-full object-contain pointer-events-none z-10"></canvas>
+    
+    <!-- HTML Motion Overlay (Smooth UI animations, typography, mockups) -->
+    <div id="uiOverlay" class="absolute inset-0 w-full h-full z-20 pointer-events-none flex flex-col justify-between p-8 md:p-12">
+      
+      <!-- Top Stage HUD: Scene Title & Live Timecode -->
+      <div class="flex items-center justify-between w-full">
+        <div class="flex items-center gap-3">
+          <div class="px-3 py-1 rounded-lg bg-emerald-950/80 border border-emerald-600/60 backdrop-blur-md flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span id="sceneBadge" class="text-xs font-black uppercase tracking-widest text-emerald-300">SCENE 1: THE MANDI CRISIS</span>
+          </div>
+          <span id="sceneSubTitle" class="text-xs font-medium text-slate-300 hidden md:inline">72-Hour Highway Gridlocks & Spoilage</span>
+        </div>
+
+        <div class="px-3 py-1 rounded-lg bg-slate-950/80 border border-slate-700 font-mono text-xs font-bold text-amber-300 flex items-center gap-2">
+          <span>TIMECODE</span>
+          <span id="timecodeDisplay">00:00.00 / 02:00.00</span>
+        </div>
+      </div>
+
+      <!-- Center Dynamic Content Stage (Replaced dynamically per scene) -->
+      <div id="sceneContainer" class="flex-1 flex items-center justify-center relative w-full h-full my-4">
+        <!-- Injected dynamically via JS -->
+      </div>
+
+      <!-- Bottom Subtitle / Narration Teleprompter Strip -->
+      <div class="w-full flex flex-col items-center">
+        <div class="max-w-4xl w-full bg-slate-950/90 border border-emerald-700/50 backdrop-blur-md rounded-2xl p-4 shadow-2xl text-center">
+          <p id="narrationText" class="text-sm md:text-base font-semibold text-emerald-100 leading-relaxed transition-all duration-300">
+            "Loading KISAN-Q Motion Graphics Explainer... Tap PLAY below."
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Scanline & Vignette Effect Layer -->
+    <div class="scanlines absolute inset-0 z-30"></div>
+  </main>
+
+  <!-- Bottom Playback Timeline & Scene Scrubbing Controls -->
+  <footer class="w-full max-w-7xl mt-3 px-2 flex flex-col gap-2">
+    <!-- Progress Scrubber -->
+    <div class="flex items-center gap-3">
+      <span id="currentTimeLabel" class="text-xs font-mono font-bold text-emerald-400 w-12 text-right">0:00</span>
+      <input id="timelineScrubber" type="range" min="0" max="120" step="0.1" value="0" class="flex-1 h-2 bg-slate-800 rounded-lg cursor-pointer">
+      <span id="totalTimeLabel" class="text-xs font-mono font-bold text-slate-400 w-12">2:00</span>
+    </div>
+
+    <!-- Control Buttons & Scene Selectors -->
+    <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+      <div class="flex items-center gap-2">
+        <button id="btnPlayPause" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black rounded-xl text-xs flex items-center gap-2 shadow-md shadow-emerald-600/30 transition">
+          <span id="playIcon">▶</span>
+          <span id="playText">PLAY EXPLAINER</span>
+        </button>
+
+        <button id="btnRestart" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl border border-slate-700 transition">
+          ↺ Restart
+        </button>
+      </div>
+
+      <!-- Quick Scene Jump Pills -->
+      <div class="flex flex-wrap items-center gap-1.5 text-xs font-bold">
+        <span class="text-slate-500 text-[11px] mr-1 hidden sm:inline">JUMP TO:</span>
+        <button onclick="jumpToTime(0)" class="scene-pill px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:bg-emerald-950 hover:text-emerald-300 transition" data-scene="1">1. Crisis</button>
+        <button onclick="jumpToTime(20)" class="scene-pill px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:bg-emerald-950 hover:text-emerald-300 transition" data-scene="2">2. Architecture</button>
+        <button onclick="jumpToTime(40)" class="scene-pill px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:bg-emerald-950 hover:text-emerald-300 transition" data-scene="3">3. 9-Lang Voice AI</button>
+        <button onclick="jumpToTime(65)" class="scene-pill px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:bg-emerald-950 hover:text-emerald-300 transition" data-scene="4">4. Smart Gate & QC</button>
+        <button onclick="jumpToTime(85)" class="scene-pill px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:bg-emerald-950 hover:text-emerald-300 transition" data-scene="5">5. Fair-Share</button>
+        <button onclick="jumpToTime(105)" class="scene-pill px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:bg-emerald-950 hover:text-emerald-300 transition" data-scene="6">6. National Impact</button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- DaVinci Resolve Slide-Over Notes Modal -->
+  <div id="notesDrawer" class="fixed inset-y-0 right-0 w-full max-w-md bg-slate-900/95 border-l border-slate-700 shadow-2xl p-6 transform translate-x-full transition-transform duration-300 z-50 overflow-y-auto backdrop-blur-xl">
+    <div class="flex items-center justify-between pb-4 border-b border-slate-800 mb-4">
+      <div class="flex items-center gap-2">
+        <span class="text-xl">🎬</span>
+        <h3 class="font-black text-white text-base">DaVinci Resolve Production Kit</h3>
+      </div>
+      <button onclick="toggleNotes()" class="text-slate-400 hover:text-white text-lg">✕</button>
+    </div>
+
+    <div class="space-y-4 text-xs text-slate-300">
+      <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+        <span class="text-emerald-400 font-bold block mb-1">⏱️ Master Specifications</span>
+        <p>• Resolution: 1920x1080 (Full HD, 16:9)</p>
+        <p>• Frame Rate: 60 FPS (Drop-frame disabled)</p>
+        <p>• Duration: Exactly 120.00 Seconds</p>
+        <p>• Color Space: Rec.709 / Gamma 2.4</p>
+      </div>
+
+      <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+        <span class="text-amber-400 font-bold block mb-1">🎛️ Fairlight Audio Setup</span>
+        <p>• Track 1: Voiceover (Fairlight Voice Isolation: 75%)</p>
+        <p>• Track 2: Upbeat Electronic/Ambient Music (-18 dB)</p>
+        <p>• Track 3: Foley Sound Effects (Tractor engine, scanner beep, coin chime)</p>
+        <p>• Sidechain: Duck music by -8 dB when VO is active.</p>
+      </div>
+
+      <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+        <span class="text-cyan-400 font-bold block mb-1">🪄 Fusion Compositing Nodes</span>
+        <p>• <b>Transform / Dynamic Zoom</b>: 1.05x subtle zoom-in on the 9-language dropdown.</p>
+        <p>• <b>FastNoise & Glow</b>: Digital circuit pulses connecting phone to mandi weighbridge.</p>
+        <p>• <b>Tracker</b>: Floating callout HUD pinned to the FCI moisture meter readout.</p>
+      </div>
+
+      <div class="pt-2">
+        <button onclick="downloadScriptFile()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black rounded-xl text-center transition">
+          📄 Download Word-for-Word Script (.TXT)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // SCRIPT DATA: 6 CHOREOGRAPHED SCENES (120 SECONDS TOTAL)
+    // =========================================================================
+    const SCENES = [
+      {
+        id: 1,
+        start: 0,
+        end: 20,
+        title: "SCENE 1: THE MANDI CRISIS",
+        subtitle: "72-Hour Highway Gridlocks & Crop Spoilage",
+        voiceover: "Every harvest season, over one point seven crore Indian farmers face crippling 72-hour highway queues at APMC mandis. With no slot management, tractors choke access roads, middlemen manipulate manual weighbridge scales, and sudden rains rot open grain trolleys.",
+        render: (t) => `
+          <div class="w-full flex flex-col md:flex-row items-center justify-around gap-8 text-center md:text-left animate-fadeIn">
+            <div class="space-y-4 max-w-lg">
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-900/40 border border-red-500/60 text-red-300 text-xs font-bold">
+                <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+                CURRENT GROUND REALITY (APMC MANDIS)
+              </div>
+              <h2 class="text-3xl md:text-5xl font-black text-white leading-tight">
+                72-Hour <span class="text-red-500 underline decoration-red-500/50">Gridlocks</span>.<br>
+                Rotting Harvests.
+              </h2>
+              <p class="text-sm text-slate-300">
+                Farmers sleep on highway asphalt for 3 nights. Manual dockage and paper tokens cause ₹4,200 Crores in annual distress sales.
+              </p>
+
+              <div class="grid grid-cols-3 gap-3 pt-2">
+                <div class="bg-slate-950/80 p-3 rounded-xl border border-red-900/60">
+                  <span class="text-2xl font-black text-red-400 font-mono">72h+</span>
+                  <p class="text-[10px] text-slate-400 uppercase font-bold mt-1">Average Wait Time</p>
+                </div>
+                <div class="bg-slate-950/80 p-3 rounded-xl border border-red-900/60">
+                  <span class="text-2xl font-black text-amber-400 font-mono">14.8%</span>
+                  <p class="text-[10px] text-slate-400 uppercase font-bold mt-1">Moisture Spoilage</p>
+                </div>
+                <div class="bg-slate-950/80 p-3 rounded-xl border border-red-900/60">
+                  <span class="text-2xl font-black text-red-500 font-mono">₹350</span>
+                  <p class="text-[10px] text-slate-400 uppercase font-bold mt-1">Middleman Cut / Qtl</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Animated Traffic Queue Graphic -->
+            <div class="relative w-72 h-72 md:w-96 md:h-96 rounded-3xl bg-slate-950/90 border border-red-900/50 flex items-center justify-center p-6 shadow-2xl overflow-hidden">
+              <div class="absolute inset-0 bg-red-950/10 pointer-events-none"></div>
+              <div class="w-full space-y-3">
+                <div class="flex items-center justify-between text-[11px] font-mono text-red-400 font-bold border-b border-red-900/40 pb-2">
+                  <span>MANDI GATE 1 (BLOCKED)</span>
+                  <span class="animate-pulse">QUEUE: 340+ TRACTORS</span>
+                </div>
+                <!-- Simulated queued tractor cards -->
+                <div class="p-2.5 bg-red-950/40 border border-red-800/60 rounded-xl flex items-center justify-between text-xs transform -translate-x-2">
+                  <span class="font-bold text-slate-200">🚜 PB-10-TA-9981 (Wheat)</span>
+                  <span class="text-red-400 font-mono font-bold">Waiting 58 hrs</span>
+                </div>
+                <div class="p-2.5 bg-red-950/40 border border-red-800/60 rounded-xl flex items-center justify-between text-xs transform translate-x-1">
+                  <span class="font-bold text-slate-200">🚜 HR-26-BK-4412 (Paddy)</span>
+                  <span class="text-red-400 font-mono font-bold">Waiting 64 hrs</span>
+                </div>
+                <div class="p-2.5 bg-red-950/40 border border-red-800/60 rounded-xl flex items-center justify-between text-xs transform -translate-x-1">
+                  <span class="font-bold text-slate-200">🚜 MP-09-CQ-1102 (Mustard)</span>
+                  <span class="text-red-400 font-mono font-bold">Waiting 71 hrs</span>
+                </div>
+                <div class="pt-2 text-center text-[10px] text-red-400 font-bold animate-pulse">
+                  ⚠️ HIGHWAY JAM LENGTH: 4.8 KILOMETERS
+                </div>
+              </div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 2,
+        start: 20,
+        end: 40,
+        title: "SCENE 2: INTRODUCING KISAN-Q",
+        subtitle: "e-NAM 2.0 Smart Mandi Logistics Platform",
+        voiceover: "Introducing KISAN-Q: The next-generation intelligent Mandi procurement platform built directly upon national e-NAM protocols. We bridge rural farmers and APMC mandi gates with cryptographic tokens, automated weighbridges, and Doppler weather radar protection.",
+        render: (t) => `
+          <div class="w-full flex flex-col items-center text-center space-y-6 animate-fadeIn">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950 border border-emerald-500/60 text-emerald-300 text-xs font-bold">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              THE SOLUTION: SYSTEM ARCHITECTURE
+            </div>
+            
+            <div class="flex items-center gap-3">
+              <img src="/images/kisan_q_icon.svg" class="w-12 h-12 rounded-2xl border-2 border-emerald-400 shadow-lg glow-emerald" alt="Logo">
+              <h2 class="text-4xl md:text-6xl font-black text-white tracking-tight">
+                KISAN<span class="text-amber-400">-Q</span>
+              </h2>
+            </div>
+            <p class="text-base text-emerald-200 max-w-2xl">
+              Cryptographic Gate Slots • Dual Certified Weighbridge • FCI Assaying Lab • Doppler Rain Shield
+            </p>
+
+            <!-- Interactive Circular Node Graph -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl w-full pt-4 text-left">
+              <div class="p-4 bg-slate-950/80 rounded-2xl border border-emerald-700/60 shadow-xl">
+                <span class="text-2xl mb-1 block">📱</span>
+                <h4 class="font-black text-emerald-300 text-sm">Farmer Mobile</h4>
+                <p class="text-[11px] text-slate-400 mt-1">9-Language voice booking & digital pass token.</p>
+              </div>
+
+              <div class="p-4 bg-slate-950/80 rounded-2xl border border-emerald-700/60 shadow-xl">
+                <span class="text-2xl mb-1 block">🚧</span>
+                <h4 class="font-black text-emerald-300 text-sm">Smart Gate Lane</h4>
+                <p class="text-[11px] text-slate-400 mt-1">0.8-sec RFID/QR barrier clearance without bribery.</p>
+              </div>
+
+              <div class="p-4 bg-slate-950/80 rounded-2xl border border-emerald-700/60 shadow-xl">
+                <span class="text-2xl mb-1 block">⚖️</span>
+                <h4 class="font-black text-emerald-300 text-sm">IoT Weighbridge</h4>
+                <p class="text-[11px] text-slate-400 mt-1">Direct Gross & Tare weight logging to e-NAM DB.</p>
+              </div>
+
+              <div class="p-4 bg-slate-950/80 rounded-2xl border border-emerald-700/60 shadow-xl">
+                <span class="text-2xl mb-1 block">🛰️</span>
+                <h4 class="font-black text-emerald-300 text-sm">Radar Shield</h4>
+                <p class="text-[11px] text-slate-400 mt-1">Doppler radar auto-diverts open grain to covered silos.</p>
+              </div>
+            </div>
+          </div>
+        `
+      },
+      {
+        id: 3,
+        start: 40,
+        end: 65,
+        title: "SCENE 3: 9-LANGUAGE SPEECH-TO-SPEECH AI",
+        subtitle: "Accessibility for Illiterate & Marginal Smallholders",
+        voiceover: "For our rural farmers, simplicity is everything. KISAN-Q features a native 9-language dropdown selector and a speech-to-speech AI Voice Assistant. Illiterate farmers can simply speak in Punjabi, Marathi, Hindi, or Gujarati to check real-time MSP rates and book mandi slots in seconds.",
+        render: (t) => {
+          const langs = [
+            { code: 'EN', label: 'English', text: 'Wheat MSP is ₹2,275/Qtl' },
+            { code: 'HI', label: 'हिन्दी', text: 'गेहूं का समर्थन मूल्य ₹2,275 है' },
+            { code: 'PA', label: 'ਪੰਜਾਬੀ', text: 'ਕਣਕ ਦਾ ਸਰਕਾਰੀ ਭਾਅ ₹2,275 ਪ੍ਰਤੀ ਕੁਇੰਟਲ' },
+            { code: 'MR', label: 'मराठी', text: 'गव्हाचा हमीभाव ₹२,२७५ प्रति क्विंटल' },
+            { code: 'GU', label: 'ગુજરાતી', text: 'ઘઉંનો સરકારી ભાવ ₹૨,૨૭૫ પ્રતિ ક્વિન્ટલ' }
+          ];
+          const activeIndex = Math.floor((t - 40) / 5) % langs.length;
+          const curr = langs[activeIndex];
+
+          return `
+            <div class="w-full flex flex-col md:flex-row items-center justify-around gap-8 animate-fadeIn">
+              <!-- Left: Feature description -->
+              <div class="max-w-lg space-y-4 text-center md:text-left">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950 border border-emerald-500/60 text-emerald-300 text-xs font-bold">
+                  <span>🎙️</span> VERNACULAR SPEECH-TO-SPEECH AI
+                </div>
+                <h2 class="text-3xl md:text-5xl font-black text-white leading-tight">
+                  Speak in <span class="text-amber-400">${curr.label}</span>.<br>
+                  Zero Paperwork.
+                </h2>
+                <p class="text-sm text-slate-300">
+                  Works across 9 official Indian languages with regional phonetic synthesis (en-IN, hi-IN, pa-IN, mr-IN, gu-IN, bn-IN, te-IN, ta-IN, kn-IN).
+                </p>
+
+                <!-- 9 Language Pills Grid -->
+                <div class="flex flex-wrap gap-1.5 pt-2">
+                  ${['EN', 'हिन्दी', 'ਪੰਜਾਬੀ', 'मराठी', 'ગુજરાતી', 'বাংলা', 'తెలుగు', 'தமிழ்', 'ಕನ್ನಡ'].map(l => `
+                    <span class="px-2 py-1 rounded-lg text-xs font-black ${l === curr.label ? 'bg-emerald-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 border border-slate-700'}">
+                      ${l}
+                    </span>
+                  `).join('')}
+                </div>
+              </div>
+
+              <!-- Right: Interactive Smartphone Mockup -->
+              <div class="floating-phone w-64 md:w-72 bg-slate-950 border-4 border-slate-700 rounded-[2.5rem] p-3 shadow-2xl relative overflow-hidden">
+                <!-- Phone top notch -->
+                <div class="w-24 h-4 bg-slate-800 rounded-b-xl mx-auto mb-2"></div>
+                
+                <div class="bg-slate-900 rounded-3xl p-3 border border-emerald-900/60 space-y-3">
+                  <!-- Phone Top Header -->
+                  <div class="flex items-center justify-between text-[10px] font-bold border-b border-slate-800 pb-2">
+                    <span class="text-emerald-400">e-NAM 2.0</span>
+                    <span class="bg-emerald-950 text-emerald-300 border border-emerald-600 px-1.5 py-0.5 rounded">${curr.label}</span>
+                  </div>
+
+                  <!-- Waveform visualizer -->
+                  <div class="bg-emerald-950/60 p-3 rounded-2xl border border-emerald-800/80 text-center space-y-2">
+                    <div class="w-12 h-12 mx-auto rounded-full bg-emerald-600 flex items-center justify-center text-xl shadow-lg glow-emerald animate-bounce">
+                      🎙️
+                    </div>
+                    <p class="text-[11px] font-black text-amber-300">${curr.text}</p>
+                    <div class="flex justify-center items-center gap-1 h-6">
+                      <span class="w-1 bg-emerald-400 h-2 animate-pulse"></span>
+                      <span class="w-1 bg-emerald-400 h-5 animate-pulse"></span>
+                      <span class="w-1 bg-emerald-400 h-6 animate-pulse"></span>
+                      <span class="w-1 bg-emerald-400 h-3 animate-pulse"></span>
+                      <span class="w-1 bg-emerald-400 h-1 animate-pulse"></span>
+                    </div>
+                  </div>
+
+                  <!-- Quick booking pass -->
+                  <div class="p-2.5 bg-slate-950 rounded-xl border border-slate-800 text-[10px] space-y-1">
+                    <span class="text-slate-400 block font-bold">DIGITAL PASS TOKEN</span>
+                    <span class="font-mono font-black text-sm text-emerald-400">KQ-1049 (Gate 1)</span>
+                    <span class="text-slate-400 block">Today • 09:00 AM - 10:00 AM</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+      },
+      {
+        id: 4,
+        start: 65,
+        end: 85,
+        title: "SCENE 4: SMART MANDI GATE & AUTOMATED QC",
+        subtitle: "Zero-Tampering Weighbridge & FCI Assaying Lab",
+        voiceover: "Upon arrival at the mandi, the tractor passes the electronic gate in under a second using cryptographic QR verification. Next, the integrated weighbridge automatically captures gross and tare weight directly into the e-NAM server, while the certified assaying lab checks grain moisture strictly compliant with FCI ≤12% standards.",
+        render: (t) => `
+          <div class="w-full flex flex-col md:flex-row items-center justify-around gap-8 animate-fadeIn">
+            
+            <!-- Left: Live Weighbridge & Assaying Simulator -->
+            <div class="max-w-lg space-y-4 text-center md:text-left">
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950 border border-emerald-500/60 text-emerald-300 text-xs font-bold">
+                <span>⚖️</span> AUTOMATED IOT WEIGHBRIDGE & QC LAB
+              </div>
+              <h2 class="text-3xl md:text-5xl font-black text-white leading-tight">
+                Zero Scale Fraud.<br>
+                <span class="text-emerald-400">FCI Standard</span> Grade A.
+              </h2>
+              <p class="text-sm text-slate-300">
+                Gross weight, tare weight, and moisture dockage are locked cryptographically. Weighbridge staff cannot demand bribes or manipulate weights.
+              </p>
+
+              <!-- Automated readings -->
+              <div class="grid grid-cols-2 gap-3 pt-2">
+                <div class="bg-slate-950 p-3 rounded-2xl border border-emerald-700/60">
+                  <span class="text-[10px] font-bold text-slate-400 block uppercase">Weighbridge (Entry Gross)</span>
+                  <span class="text-2xl font-mono font-black text-white">14.20 MT</span>
+                  <span class="text-[9px] text-emerald-400 block mt-1">Tare: 4.20 MT • Net: 10.00 MT</span>
+                </div>
+
+                <div class="bg-slate-950 p-3 rounded-2xl border border-emerald-700/60">
+                  <span class="text-[10px] font-bold text-slate-400 block uppercase">NABL Moisture Sensor</span>
+                  <span class="text-2xl font-mono font-black text-amber-300">11.4%</span>
+                  <span class="text-[9px] text-emerald-400 font-bold block mt-1">✓ PASSED (≤12% FCI Full MSP)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Mandi Gate Hardware Mockup -->
+            <div class="w-72 md:w-96 bg-slate-950 rounded-3xl p-5 border border-emerald-800/80 shadow-2xl space-y-4">
+              <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                <span class="font-mono text-xs text-slate-300 font-bold">KHANNA APMC • GATE 1</span>
+                <span class="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-600 px-2 py-0.5 rounded font-bold">BOOM BARRIER OPEN</span>
+              </div>
+
+              <div class="relative h-36 bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden flex items-center justify-center">
+                <img src="/images/mandi_entry_gate.jpg" class="absolute inset-0 w-full h-full object-cover opacity-40" alt="Gate">
+                <div class="relative z-10 text-center p-2 bg-slate-950/80 rounded-xl border border-emerald-600/60 backdrop-blur-sm">
+                  <span class="text-xs text-emerald-300 font-mono font-bold block">RFID / QR SCANNED</span>
+                  <span class="text-sm font-black text-white">TOKEN #KQ-1049</span>
+                  <span class="text-[9px] text-slate-300 block">Smallholder Express Lane (0.8s)</span>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between text-xs font-mono pt-1">
+                <span class="text-slate-400">Total Turnaround:</span>
+                <span class="text-emerald-400 font-bold">14 Mins elapsed</span>
+              </div>
+            </div>
+
+          </div>
+        `
+      },
+      {
+        id: 5,
+        start: 85,
+        end: 105,
+        title: "SCENE 5: THE FAIR-SHARE MATHEMATICAL ALLOCATION",
+        subtitle: "60% Quota Reserved for Marginal Farmers (<2 Ha)",
+        voiceover: "Our proprietary Fair-Share Algorithm solves the fundamental flaw of traditional mandis. Instead of wealthy traders hoarding slots, KISAN-Q algorithmically reserves 60% of all hourly capacity for marginal farmers with under two hectares of land.",
+        render: (t) => `
+          <div class="w-full flex flex-col md:flex-row items-center justify-around gap-8 animate-fadeIn">
+            
+            <div class="max-w-lg space-y-4 text-center md:text-left">
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-950 border border-amber-500/60 text-amber-300 text-xs font-bold">
+                <span>📊</span> FAIR-SHARE PRIORITY ALGORITHM
+              </div>
+              <h2 class="text-3xl md:text-5xl font-black text-white leading-tight">
+                60% Reserved for<br>
+                <span class="text-amber-400">Small Farmers</span> (&lt;2 Ha).
+              </h2>
+              <p class="text-sm text-slate-300">
+                Stops large commercial aggregates and middlemen cartels from monopolizing gate entries. Verified via PM-Kisan Jamabandi land records.
+              </p>
+
+              <div class="p-3.5 bg-slate-950 rounded-2xl border border-amber-800/60 space-y-2">
+                <div class="flex justify-between text-xs font-bold">
+                  <span class="text-emerald-400">Marginal & Small Farmers (&lt;2 Ha)</span>
+                  <span class="text-white font-mono">60% (18 Trolleys / Hr)</span>
+                </div>
+                <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden flex">
+                  <div class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full w-[60%] animate-pulse"></div>
+                  <div class="bg-slate-600 h-full w-[40%]"></div>
+                </div>
+                <div class="flex justify-between text-[10px] text-slate-400 font-bold">
+                  <span>Priority Smallholder Express Lane</span>
+                  <span>General Commercial (40%)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Weather Radar Protection Sub-Panel -->
+            <div class="w-72 md:w-96 bg-slate-950 rounded-3xl p-5 border border-cyan-800/80 shadow-2xl space-y-3">
+              <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                <div class="flex items-center gap-2">
+                  <span class="text-cyan-400 text-lg">🌧️</span>
+                  <span class="font-bold text-xs text-white">IMD Doppler Radar Shield</span>
+                </div>
+                <span class="text-[9px] bg-cyan-950 text-cyan-300 border border-cyan-600 px-2 py-0.5 rounded font-mono font-bold">ACTIVE</span>
+              </div>
+
+              <div class="p-3 bg-slate-900 rounded-2xl border border-cyan-900/60 text-xs space-y-1.5">
+                <div class="flex justify-between font-mono text-[11px]">
+                  <span class="text-slate-400">Forecast:</span>
+                  <span class="text-cyan-300 font-bold">Rain detected in 45m</span>
+                </div>
+                <div class="flex justify-between font-mono text-[11px]">
+                  <span class="text-slate-400">Action:</span>
+                  <span class="text-emerald-400 font-bold">Auto-Routed to Covered Silo B</span>
+                </div>
+              </div>
+
+              <p class="text-[10px] text-slate-400 leading-relaxed">
+                Prevents rain soaking open grain trolleys while in queue, saving up to ₹1.2 Crores per mandi per storm event.
+              </p>
+            </div>
+
+          </div>
+        `
+      },
+      {
+        id: 6,
+        start: 105,
+        end: 120,
+        title: "SCENE 6: DIRECT DBT PAYMENT & NATIONAL IMPACT",
+        subtitle: "100% PFMS Bank Transfer • Ready for 1,361+ Mandis",
+        voiceover: "Finally, within 24 hours of weighment, the farmer receives guaranteed MSP payment directly into their Aadhaar-linked bank account through PFMS Direct Benefit Transfer. KISAN-Q transforms chaotic mandis into transparent, efficient lifelines for Indian agriculture.",
+        render: (t) => `
+          <div class="w-full flex flex-col items-center text-center space-y-6 animate-fadeIn">
+            
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950 border border-emerald-500/60 text-emerald-300 text-xs font-bold">
+              <span>💳</span> DIRECT BENEFIT TRANSFER (PFMS-DBT)
+            </div>
+
+            <h2 class="text-4xl md:text-6xl font-black text-white leading-tight">
+              Direct to Bank. <span class="text-emerald-400">Zero Middlemen.</span>
+            </h2>
+
+            <!-- Big Stat Impact Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl w-full pt-2">
+              <div class="bg-slate-950/90 p-5 rounded-3xl border border-emerald-600/60 shadow-xl space-y-1">
+                <span class="text-4xl md:text-5xl font-mono font-black text-emerald-400">96% ↓</span>
+                <h4 class="font-bold text-white text-sm">Wait Time Slashed</h4>
+                <p class="text-[11px] text-slate-400">From 72 hours down to 45 minutes.</p>
+              </div>
+
+              <div class="bg-slate-950/90 p-5 rounded-3xl border border-emerald-600/60 shadow-xl space-y-1">
+                <span class="text-4xl md:text-5xl font-mono font-black text-amber-400">100%</span>
+                <h4 class="font-bold text-white text-sm">Direct Bank Transfer</h4>
+                <p class="text-[11px] text-slate-400">PFMS-DBT within 24-48 hours.</p>
+              </div>
+
+              <div class="bg-slate-950/90 p-5 rounded-3xl border border-emerald-600/60 shadow-xl space-y-1">
+                <span class="text-4xl md:text-5xl font-mono font-black text-teal-400">1,361+</span>
+                <h4 class="font-bold text-white text-sm">Mandis Scalable</h4>
+                <p class="text-[11px] text-slate-400">Plug-and-play e-NAM integration.</p>
+              </div>
+            </div>
+
+            <!-- Call to action footer banner -->
+            <div class="pt-3">
+              <span class="inline-block bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-600 text-slate-950 font-black text-xs md:text-sm px-6 py-2 rounded-full shadow-xl">
+                Smart India Hackathon 2026 • Problem Statement 26032 • SAKEC Mumbai
+              </span>
+            </div>
+
+          </div>
+        `
+      }
+    ];
+
+    // =========================================================================
+    // PLAYER CONTROLLER STATE & TIMELINE ENGINE
+    // =========================================================================
+    let currentTime = 0;
+    let isPlaying = false;
+    let voiceEnabled = true;
+    let currentSceneIndex = 0;
+    let animationFrameId = null;
+    let lastTimestamp = null;
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let isRecording = false;
+
+    const stageContainer = document.getElementById('stage-container');
+    const sceneContainer = document.getElementById('sceneContainer');
+    const sceneBadge = document.getElementById('sceneBadge');
+    const sceneSubTitle = document.getElementById('sceneSubTitle');
+    const timecodeDisplay = document.getElementById('timecodeDisplay');
+    const narrationText = document.getElementById('narrationText');
+    const timelineScrubber = document.getElementById('timelineScrubber');
+    const currentTimeLabel = document.getElementById('currentTimeLabel');
+    const btnPlayPause = document.getElementById('btnPlayPause');
+    const playIcon = document.getElementById('playIcon');
+    const playText = document.getElementById('playText');
+    const btnRestart = document.getElementById('btnRestart');
+    const btnVoiceToggle = document.getElementById('btnVoiceToggle');
+    const voiceIcon = document.getElementById('voiceIcon');
+    const voiceLabel = document.getElementById('voiceLabel');
+    const btnNotesToggle = document.getElementById('btnNotesToggle');
+    const notesDrawer = document.getElementById('notesDrawer');
+    const btnRecord = document.getElementById('btnRecord');
+    const recordLabel = document.getElementById('recordLabel');
+
+    // Canvas rendering for background particles & motion radar
+    const canvas = document.getElementById('motionCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Particle field
+    const particles = Array.from({ length: 60 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      radius: Math.random() * 2 + 1,
+      speedX: (Math.random() - 0.5) * 0.8,
+      speedY: (Math.random() - 0.5) * 0.8,
+      color: Math.random() > 0.5 ? 'rgba(16, 185, 129, ' : 'rgba(245, 158, 11, '
+    }));
+
+    function drawCanvasBackground(time) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Subtle dynamic grid
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+      ctx.lineWidth = 1;
+      const gridSize = 80;
+      const offsetX = (time * 20) % gridSize;
+      for (let x = -offsetX; x < canvas.width; x += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+      for (let y = 0; y < canvas.height; y += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+
+      // Floating ambient particles
+      particles.forEach(p => {
+        p.x += p.speedX;
+        p.y += p.speedY;
+        if (p.x < 0) p.x = canvas.width;
+        if (p.x > canvas.width) p.x = 0;
+        if (p.y < 0) p.y = canvas.height;
+        if (p.y > canvas.height) p.y = 0;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = p.color + '0.4)';
+        ctx.fill();
+      });
+    }
+
+    function formatTimecode(sec) {
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      const ms = Math.floor((sec % 1) * 100);
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}.${String(ms).padStart(2, '0')}`;
+    }
+
+    function formatTimeMinutes(sec) {
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      return `${m}:${String(s).padStart(2, '0')}`;
+    }
+
+    // Voiceover Synthesis (Speaks each scene when transitioned)
+    let currentUtterance = null;
+    function speakNarration(text) {
+      if (!voiceEnabled || typeof window === 'undefined' || !window.speechSynthesis) return;
+      try {
+        window.speechSynthesis.cancel();
+        const utt = new SpeechSynthesisUtterance(text);
+        utt.rate = 1.05;
+        utt.pitch = 1.0;
+        utt.lang = 'en-IN';
+        currentUtterance = utt;
+        window.speechSynthesis.speak(utt);
+      } catch (e) {
+        console.warn('TTS note:', e);
+      }
+    }
+
+    function stopNarration() {
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    }
+
+    function updateSceneDisplay(time) {
+      const sceneIndex = SCENES.findIndex(s => time >= s.start && time < s.end) !== -1
+        ? SCENES.findIndex(s => time >= s.start && time < s.end)
+        : SCENES.length - 1;
+
+      const scene = SCENES[sceneIndex];
+
+      // If scene changed
+      if (sceneIndex !== currentSceneIndex) {
+        currentSceneIndex = sceneIndex;
+        sceneBadge.innerText = scene.title;
+        sceneSubTitle.innerText = scene.subtitle;
+        narrationText.innerText = `"${scene.voiceover}"`;
+        if (isPlaying) speakNarration(scene.voiceover);
+
+        // Update active scene pill
+        document.querySelectorAll('.scene-pill').forEach(pill => {
+          if (parseInt(pill.dataset.scene) === scene.id) {
+            pill.className = 'scene-pill px-2.5 py-1 rounded-lg bg-emerald-700 text-white font-black shadow-sm';
+          } else {
+            pill.className = 'scene-pill px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:bg-emerald-950 hover:text-emerald-300 transition';
+          }
+        });
+      }
+
+      // Render inner scene markup
+      sceneContainer.innerHTML = scene.render(time);
+
+      // Update timecode & progress
+      timecodeDisplay.innerText = `${formatTimecode(time)} / 02:00.00`;
+      currentTimeLabel.innerText = formatTimeMinutes(time);
+      timelineScrubber.value = time;
+    }
+
+    // Main animation loop
+    function loop(timestamp) {
+      if (!lastTimestamp) lastTimestamp = timestamp;
+      const delta = (timestamp - lastTimestamp) / 1000;
+      lastTimestamp = timestamp;
+
+      if (isPlaying) {
+        currentTime += delta;
+        if (currentTime >= 120) {
+          currentTime = 120;
+          pause();
+        }
+      }
+
+      drawCanvasBackground(currentTime);
+      updateSceneDisplay(currentTime);
+
+      if (isPlaying) {
+        animationFrameId = requestAnimationFrame(loop);
+      }
+    }
+
+    function play() {
+      isPlaying = true;
+      lastTimestamp = null;
+      playIcon.innerText = '⏸';
+      playText.innerText = 'PAUSE';
+      btnPlayPause.className = 'px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs flex items-center gap-2 shadow-md shadow-amber-500/30 transition';
+      
+      const scene = SCENES[currentSceneIndex];
+      speakNarration(scene.voiceover);
+
+      animationFrameId = requestAnimationFrame(loop);
+    }
+
+    function pause() {
+      isPlaying = false;
+      stopNarration();
+      playIcon.innerText = '▶';
+      playText.innerText = 'PLAY EXPLAINER';
+      btnPlayPause.className = 'px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black rounded-xl text-xs flex items-center gap-2 shadow-md shadow-emerald-600/30 transition';
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    }
+
+    btnPlayPause.addEventListener('click', () => {
+      if (isPlaying) pause();
+      else play();
+    });
+
+    btnRestart.addEventListener('click', () => {
+      jumpToTime(0);
+      play();
+    });
+
+    timelineScrubber.addEventListener('input', (e) => {
+      jumpToTime(parseFloat(e.target.value));
+    });
+
+    function jumpToTime(t) {
+      currentTime = t;
+      currentSceneIndex = -1; // Force re-render
+      updateSceneDisplay(currentTime);
+      drawCanvasBackground(currentTime);
+      if (isPlaying) {
+        const scene = SCENES.find(s => currentTime >= s.start && currentTime < s.end) || SCENES[0];
+        speakNarration(scene.voiceover);
+      }
+    }
+
+    // Voice toggle
+    btnVoiceToggle.addEventListener('click', () => {
+      voiceEnabled = !voiceEnabled;
+      voiceIcon.innerText = voiceEnabled ? '🔊' : '🔇';
+      voiceLabel.innerText = voiceEnabled ? 'Voiceover: ON' : 'Voiceover: OFF';
+      if (!voiceEnabled) stopNarration();
+      else if (isPlaying) speakNarration(SCENES[currentSceneIndex].voiceover);
+    });
+
+    // Notes drawer toggle
+    function toggleNotes() {
+      notesDrawer.classList.toggle('translate-x-full');
+    }
+    btnNotesToggle.addEventListener('click', toggleNotes);
+
+    // Download Script File (.txt)
+    function downloadScriptFile() {
+      let scriptContent = `=== KISAN-Q MOTION GRAPHIC EXPLAINER SCRIPT (SIH 26032) ===\n\n`;
+      SCENES.forEach(s => {
+        scriptContent += `[${formatTimeMinutes(s.start)} - ${formatTimeMinutes(s.end)}] ${s.title}\n`;
+        scriptContent += `Subhead: ${s.subtitle}\n`;
+        scriptContent += `Narration: "${s.voiceover}"\n\n`;
+      });
+      const blob = new Blob([scriptContent], { type: 'text/plain' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'KISAN-Q_Explainer_Script.txt';
+      a.click();
+    }
+
+    // 1-Click Screen / Canvas Recorder
+    btnRecord.addEventListener('click', async () => {
+      if (isRecording) {
+        // Stop recording
+        mediaRecorder.stop();
+        isRecording = false;
+        recordLabel.innerText = 'Record MP4/WebM';
+        btnRecord.className = 'px-4 py-1.5 bg-red-600 hover:bg-red-500 text-white text-xs font-black rounded-lg transition flex items-center gap-1.5 shadow-lg shadow-red-600/30';
+        return;
+      }
+
+      try {
+        // Capture composite stream from stage container using displayMedia
+        const stream = await navigator.mediaDevices.getDisplayMedia({
+          video: { frameRate: 60, width: 1920, height: 1080 },
+          audio: true
+        });
+
+        recordedChunks = [];
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) recordedChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'KISAN-Q_Motion_Graphics_Explainer_1080p.webm';
+          a.click();
+          stream.getTracks().forEach(t => t.stop());
+        };
+
+        mediaRecorder.start();
+        isRecording = true;
+        recordLabel.innerText = 'Stop & Save Video';
+        btnRecord.className = 'px-4 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black rounded-lg transition flex items-center gap-1.5 shadow-lg shadow-amber-500/30';
+
+        // Auto restart and play from beginning
+        jumpToTime(0);
+        play();
+
+      } catch (err) {
+        alert('Screen recording note: Please allow screen capture permission to record the 1080p video.');
+      }
+    });
+
+    // Initial render
+    jumpToTime(0);
+  </script>
+</body>
+</html>
