@@ -2011,6 +2011,149 @@ Always address the farmer respectfully (e.g. Kisan ji). Format with bullet point
   return res.json({ reply: fallbackReply, source: "multilingual_fallback", lang: langKey });
 });
 
+// =========================================================================
+// 🎙️ HIGH-DEFINITION NEURAL HUMAN VOICE SYNTHESIS (TTS)
+// Supports Built-in Edge Neural Voices (100% Free) + External APIs (ElevenLabs/Sarvam)
+// =========================================================================
+const { MsEdgeTTS, OUTPUT_FORMAT } = require("msedge-tts");
+
+const NEURAL_VOICE_MAP = {
+  hi: "hi-IN-SwaraNeural",      // Warm expressive Indian female
+  en: "en-IN-NeerjaNeural",     // Natural Indian English female
+  pa: "pa-IN-OjasNeural",       // Natural Punjabi
+  mr: "mr-IN-AarohiNeural",     // Natural Marathi
+  gu: "gu-IN-DhwaniNeural",     // Natural Gujarati
+  bn: "bn-IN-TanishaaNeural",   // Natural Bengali
+  te: "te-IN-ShrutiNeural",     // Natural Telugu
+  ta: "ta-IN-PallaviNeural",    // Natural Tamil
+  kn: "kn-IN-SapnaNeural"       // Natural Kannada
+};
+
+const ttsAudioCache = new Map();
+
+app.post("/api/tts", async (req, res) => {
+  try {
+    const { text, lang = "hi" } = req.body;
+    if (!text || !text.trim()) {
+      return res.status(400).json({ error: "Text is required" });
+    }
+
+    // Clean text for natural human pronunciation
+    const clean = text
+      .replace(/```[\s\S]*?```/g, "")
+      .replace(/`([^`]+)`/g, "$1")
+      .replace(/\*\*([^*]+)\*\*/g, "$1")
+      .replace(/\*([^*]+)\*/g, "$1")
+      .replace(/#{1,6}\s+/g, "")
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+      .replace(/https?:\/\/\S+/g, "")
+      .replace(/₹\s*([0-9,]+)/g, lang === "hi" ? "रुपये $1" : "Rupees $1")
+      .replace(/•/g, ", ")
+      .replace(/[|]/g, " ")
+      .replace(/\n+/g, ". ")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+
+    if (!clean) {
+      return res.status(400).json({ error: "No readable speech text" });
+    }
+
+    const cacheKey = `${lang}:${clean.slice(0, 300)}`;
+    if (ttsAudioCache.has(cacheKey)) {
+      res.setHeader("Content-Type", "audio/mpeg");
+      res.setHeader("Cache-Control", "public, max-age=86400");
+      return res.send(ttsAudioCache.get(cacheKey));
+    }
+
+    // 1. Optional External API: ElevenLabs
+    const elevenKey = (process.env.ELEVENLABS_API_KEY || "").trim();
+    if (elevenKey) {
+      try {
+        const voiceId = process.env.ELEVENLABS_VOICE_ID || "21m00Tcm4TlvDq8ikWAM";
+        const elResp = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "xi-api-key": elevenKey
+          },
+          body: JSON.stringify({
+            text: clean,
+            model_id: "eleven_multilingual_v2",
+            voice_settings: { stability: 0.5, similarity_boost: 0.75 }
+          })
+        });
+        if (elResp.ok) {
+          const ab = await elResp.arrayBuffer();
+          const buf = Buffer.from(ab);
+          ttsAudioCache.set(cacheKey, buf);
+          res.setHeader("Content-Type", "audio/mpeg");
+          return res.send(buf);
+        }
+      } catch (elErr) {
+        console.warn("ElevenLabs TTS failed, falling back to neural voice:", elErr.message);
+      }
+    }
+
+    // 2. Optional External API: Sarvam AI (Indian Rural Dialects)
+    const sarvamKey = (process.env.SARVAM_API_KEY || "").trim();
+    if (sarvamKey) {
+      try {
+        const sResp = await fetch("https://api.sarvam.ai/text-to-speech", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "api-subscription-key": sarvamKey
+          },
+          body: JSON.stringify({
+            inputs: [clean],
+            target_language_code: `${lang}-IN`,
+            speaker: "meera",
+            model: "bulbul:v1"
+          })
+        });
+        if (sResp.ok) {
+          const sJson = await sResp.json();
+          if (sJson.audios && sJson.audios[0]) {
+            const buf = Buffer.from(sJson.audios[0], "base64");
+            ttsAudioCache.set(cacheKey, buf);
+            res.setHeader("Content-Type", "audio/wav");
+            return res.send(buf);
+          }
+        }
+      } catch (sErr) {
+        console.warn("Sarvam AI TTS failed, falling back to neural voice:", sErr.message);
+      }
+    }
+
+    // 3. Default: High-Definition Microsoft Neural Voice (100% Free, Built-In, Real Human Voice)
+    const voice = NEURAL_VOICE_MAP[lang] || NEURAL_VOICE_MAP.hi;
+    const tts = new MsEdgeTTS();
+    await tts.setMetadata(voice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
+    const { audioStream } = tts.toStream(clean);
+
+    const chunks = [];
+    audioStream.on("data", chunk => chunks.push(chunk));
+    audioStream.on("end", () => {
+      const audioBuffer = Buffer.concat(chunks);
+      if (ttsAudioCache.size > 250) {
+        const firstKey = ttsAudioCache.keys().next().value;
+        ttsAudioCache.delete(firstKey);
+      }
+      ttsAudioCache.set(cacheKey, audioBuffer);
+      res.setHeader("Content-Type", "audio/mpeg");
+      res.setHeader("Cache-Control", "public, max-age=86400");
+      res.send(audioBuffer);
+    });
+    audioStream.on("error", err => {
+      console.error("MsEdgeTTS stream error:", err);
+      res.status(500).json({ error: "TTS synthesis stream failed", fallback: true });
+    });
+  } catch (err) {
+    console.error("TTS Endpoint Error:", err.message);
+    res.status(500).json({ error: err.message, fallback: true });
+  }
+});
+
 // Start Server listening on all interfaces (0.0.0.0) for Wi-Fi access
 
 app.listen(PORT, "0.0.0.0", () => {

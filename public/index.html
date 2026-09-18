@@ -3610,56 +3610,92 @@
           .trim();
       }
 
-      function speakText(text, btnElement) {
-        if (!('speechSynthesis' in window)) return;
+      let currentAudio = null;
+
+      async function speakText(text, btnElement) {
         stopSpeaking();
+        if (!audioEnabled) return;
 
-        const clean = cleanTextForSpeech(text);
-        if (!clean) return;
+        isSpeaking = true;
+        activeSpeakBtn = btnElement || null;
+        if (btnElement) {
+          btnElement.classList.add('speaking');
+          const icon = btnElement.querySelector('.audio-btn-icon');
+          const label = btnElement.querySelector('.audio-btn-label');
+          if (icon) icon.textContent = '⏹️';
+          if (label) label.textContent = (chatLang === 'hi' ? 'रोकें' : 'Stop');
+        }
 
+        // 1. Try High-Definition Studio Neural Human Voice from server
         try {
-          if (window.speechSynthesis.paused) {
-            window.speechSynthesis.resume();
-          }
+          const resp = await fetch('/api/tts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text, lang: chatLang })
+          });
 
-          const utter = new SpeechSynthesisUtterance(clean);
-          const voice = getBestVoice(chatLang);
-          if (voice) utter.voice = voice;
-          const langMap = { en: 'en-IN', hi: 'hi-IN', pa: 'pa-IN', mr: 'mr-IN', gu: 'gu-IN', bn: 'bn-IN', te: 'te-IN', ta: 'ta-IN', kn: 'kn-IN' };
-          utter.lang = langMap[chatLang] || 'hi-IN';
-          utter.rate = 0.95; // warm human cadence
-          utter.pitch = 1.0;
-
-          isSpeaking = true;
-          activeSpeakBtn = btnElement || null;
-
-          if (btnElement) {
-            btnElement.classList.add('speaking');
-            const icon = btnElement.querySelector('.audio-btn-icon');
-            const label = btnElement.querySelector('.audio-btn-label');
-            if (icon) icon.textContent = '⏹️';
-            if (label) label.textContent = (chatLang === 'hi' ? 'रोकें' : 'Stop');
-          }
-
-          utter.onend = function() { stopSpeaking(); };
-          utter.onerror = function() { stopSpeaking(); };
-
-          setTimeout(function() {
-            try {
-              if (window.speechSynthesis.paused) window.speechSynthesis.resume();
-              window.speechSynthesis.speak(utter);
-            } catch(e) {
-              console.warn('speak failed:', e);
-              stopSpeaking();
+          if (resp.ok) {
+            const blob = await resp.blob();
+            if (blob && blob.size > 200) {
+              const audioUrl = URL.createObjectURL(blob);
+              currentAudio = new Audio(audioUrl);
+              currentAudio.onended = () => { stopSpeaking(); URL.revokeObjectURL(audioUrl); };
+              currentAudio.onerror = () => { stopSpeaking(); URL.revokeObjectURL(audioUrl); };
+              await currentAudio.play();
+              return;
             }
-          }, 60);
-        } catch(e) {
-          console.warn('Speech synthesis error:', e);
+          }
+        } catch(netErr) {
+          console.warn('Server neural TTS unavailable, using local synthesis:', netErr);
+        }
+
+        // 2. Fallback to Browser Speech Synthesis
+        if ('speechSynthesis' in window) {
+          const clean = cleanTextForSpeech(text);
+          if (!clean) { stopSpeaking(); return; }
+
+          try {
+            if (window.speechSynthesis.paused) {
+              window.speechSynthesis.resume();
+            }
+
+            const utter = new SpeechSynthesisUtterance(clean);
+            const voice = getBestVoice(chatLang);
+            if (voice) utter.voice = voice;
+            const langMap = { en: 'en-IN', hi: 'hi-IN', pa: 'pa-IN', mr: 'mr-IN', gu: 'gu-IN', bn: 'bn-IN', te: 'te-IN', ta: 'ta-IN', kn: 'kn-IN' };
+            utter.lang = langMap[chatLang] || 'hi-IN';
+            utter.rate = 0.95;
+            utter.pitch = 1.0;
+
+            utter.onend = function() { stopSpeaking(); };
+            utter.onerror = function() { stopSpeaking(); };
+
+            setTimeout(function() {
+              try {
+                if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+                window.speechSynthesis.speak(utter);
+              } catch(e) {
+                console.warn('speak failed:', e);
+                stopSpeaking();
+              }
+            }, 60);
+          } catch(e) {
+            console.warn('Speech synthesis error:', e);
+            stopSpeaking();
+          }
+        } else {
           stopSpeaking();
         }
       }
 
       function stopSpeaking() {
+        if (currentAudio) {
+          try {
+            currentAudio.pause();
+            currentAudio.currentTime = 0;
+          } catch(e){}
+          currentAudio = null;
+        }
         if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
           try { window.speechSynthesis.cancel(); } catch(e){}
         }
