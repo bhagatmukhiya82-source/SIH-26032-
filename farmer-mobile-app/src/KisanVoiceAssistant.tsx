@@ -1,8 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Mic, MicOff, Volume2, VolumeX, X, Sparkles, Send, ArrowRight } from 'lucide-react';
+import { Lang } from './i18nData';
+
+const SPEECH_LANG_MAP: Record<Lang, string> = {
+  EN: 'en-IN',
+  HI: 'hi-IN',
+  PA: 'pa-IN',
+  MR: 'mr-IN',
+  GU: 'gu-IN',
+  BN: 'bn-IN',
+  TE: 'te-IN',
+  TA: 'ta-IN',
+  KN: 'kn-IN'
+};
 
 interface Props {
-  lang: 'EN' | 'HI' | 'PA';
+  lang: Lang;
   onNavigate: (view: 'AUTH' | 'DASHBOARD' | 'BOOKING' | 'QUEUE' | 'PAYMENT' | 'PROFILE' | 'GALLERY' | 'OFFERS') => void;
   booking?: any;
 }
@@ -110,7 +123,7 @@ export const KisanVoiceAssistant: React.FC<Props> = ({ lang, onNavigate, booking
     try {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = lang === 'HI' ? 'hi-IN' : 'en-IN';
+      utterance.lang = SPEECH_LANG_MAP[lang] || 'hi-IN';
       utterance.rate = 0.95;
       utterance.pitch = 1.0;
       utterance.onstart = () => setIsSpeaking(true);
@@ -200,7 +213,7 @@ export const KisanVoiceAssistant: React.FC<Props> = ({ lang, onNavigate, booking
 
     try {
       const recognition = new SpeechRecognition();
-      recognition.lang = lang === 'HI' ? 'hi-IN' : 'en-IN';
+      recognition.lang = SPEECH_LANG_MAP[lang] || 'hi-IN';
       recognition.interimResults = true;
       recognition.maxAlternatives = 1;
       recognition.continuous = false;

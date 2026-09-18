@@ -37,9 +37,10 @@ import {
   Gift,
   Newspaper,
   ChevronLeft,
+  ChevronDown,
   Send
 } from 'lucide-react';
-import { I18N_DICT, tHelper, translateDOM } from './i18nData';
+import { I18N_DICT, tHelper, translateDOM, Lang, SUPPORTED_LANGUAGES } from './i18nData';
 import { KisanVoiceAssistant } from './KisanVoiceAssistant';
 
 // --- TYPES & INTERFACES ---
@@ -53,7 +54,6 @@ type Status =
   | 'PAYMENT_PROCESSING' 
   | 'PAID';
 
-type Lang = 'EN' | 'HI' | 'PA';
 type View = 'AUTH' | 'DASHBOARD' | 'BOOKING' | 'QUEUE' | 'PAYMENT' | 'PROFILE' | 'GALLERY' | 'OFFERS';
 type AuthTab = 'LOGIN' | 'REGISTER';
 
@@ -212,8 +212,140 @@ const DEFAULT_FARMER: FarmerProfile = {
   ifsc: 'PUNB0014200'
 };
 
+// --- MULTI-LINGUAL CROP TRANSLATIONS (All 9 Languages) ---
+const CROP_TRANSLATIONS: Record<string, Record<Lang, string>> = {
+  wheat: { 
+    EN: 'Wheat (गेहूं)', 
+    HI: 'गेहूं (Wheat)', 
+    PA: 'ਕਣਕ (Wheat)', 
+    MR: 'गहू (Wheat)', 
+    GU: 'ઘઉં (Wheat)', 
+    BN: 'গম (Wheat)', 
+    TE: 'గోధుమలు (Wheat)', 
+    TA: 'கோதுமை (Wheat)', 
+    KN: 'ಗೋಧಿ (Wheat)' 
+  },
+  paddy: { 
+    EN: 'Paddy / Rice (धान)', 
+    HI: 'धान / चावल (Paddy)', 
+    PA: 'ਝੋਨਾ / ਚੌਲ (Paddy)', 
+    MR: 'भात / तांदूळ (Paddy)', 
+    GU: 'ડાંગર / ચોખા (Paddy)', 
+    BN: 'ধান / চাল (Paddy)', 
+    TE: 'వరి / బియ్యం (Paddy)', 
+    TA: 'நெல் / அரிசி (Paddy)', 
+    KN: 'ಭತ್ತ / ಅಕ್ಕಿ (Paddy)' 
+  },
+  mustard: { 
+    EN: 'Mustard (सरसों)', 
+    HI: 'सरसों (Mustard)', 
+    PA: 'ਸਰ੍ਹੋਂ (Mustard)', 
+    MR: 'मोहरी (Mustard)', 
+    GU: 'રાઈ (Mustard)', 
+    BN: 'সরিষা (Mustard)', 
+    TE: 'ఆవాలు (Mustard)', 
+    TA: 'கடுகு (Mustard)', 
+    KN: 'ಸಾಸಿವೆ (Mustard)' 
+  },
+  cotton: { 
+    EN: 'Cotton (कपास)', 
+    HI: 'कपास (Cotton)', 
+    PA: 'ਨਰਮਾ / ਕਪਾਹ (Cotton)', 
+    MR: 'कापूस (Cotton)', 
+    GU: 'કપાસ (Cotton)', 
+    BN: 'তুলা (Cotton)', 
+    TE: 'పత్తి (Cotton)', 
+    TA: 'பருத்தி (Cotton)', 
+    KN: 'ಹತ್ತಿ (Cotton)' 
+  },
+  maize: { 
+    EN: 'Maize / Corn (मक्का)', 
+    HI: 'मक्का (Maize)', 
+    PA: 'ਮੱਕੀ (Maize)', 
+    MR: 'मका (Maize)', 
+    GU: 'મકાઈ (Maize)', 
+    BN: 'ভুট্টা (Maize)', 
+    TE: 'మొక్కజొన్న (Maize)', 
+    TA: 'மக்காச்சோளம் (Maize)', 
+    KN: 'ಮೆಕ್ಕೆಜೋಳ (Maize)' 
+  },
+  chana: { 
+    EN: 'Gram / Chana (चना)', 
+    HI: 'चना (Gram)', 
+    PA: 'ਛੋਲੇ / ਚਣਾ (Gram)', 
+    MR: 'हरभरा / चणा (Gram)', 
+    GU: 'ચણા (Gram)', 
+    BN: 'ছোলা (Gram)', 
+    TE: 'శనగలు (Gram)', 
+    TA: 'கொண்டைக்கடலை (Gram)', 
+    KN: 'ಕಡಲೆ (Gram)' 
+  },
+};
+
+export const getCropDisplayName = (cropIdOrCrop: any, lang: Lang): string => {
+  const id = typeof cropIdOrCrop === 'string' ? cropIdOrCrop : cropIdOrCrop?.id;
+  if (id && CROP_TRANSLATIONS[id] && CROP_TRANSLATIONS[id][lang]) {
+    return CROP_TRANSLATIONS[id][lang];
+  }
+  if (typeof cropIdOrCrop === 'object') {
+    if (lang === 'PA') return cropIdOrCrop.namePa || cropIdOrCrop.nameHi || cropIdOrCrop.nameEn;
+    if (lang === 'HI') return cropIdOrCrop.nameHi || cropIdOrCrop.nameEn;
+    return cropIdOrCrop.nameEn || cropIdOrCrop.nameHi || '';
+  }
+  return id || '';
+};
+
+// --- MULTI-LINGUAL DROPDOWN SELECTOR ---
+interface LanguageDropdownProps {
+  currentLang: Lang;
+  onSelect: (lang: Lang) => void;
+  variant?: 'light' | 'dark';
+}
+
+const LanguageDropdown: React.FC<LanguageDropdownProps> = ({ currentLang, onSelect, variant = 'light' }) => {
+  const current = SUPPORTED_LANGUAGES.find(l => l.code === currentLang) || SUPPORTED_LANGUAGES[0];
+
+  const containerClasses = variant === 'dark'
+    ? 'bg-emerald-950/90 text-emerald-100 border border-emerald-700/80 hover:border-emerald-500 shadow-sm'
+    : 'bg-white text-slate-800 border border-slate-300 hover:border-emerald-600 shadow-sm';
+
+  return (
+    <div className={`relative inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl transition cursor-pointer ${containerClasses}`}>
+      <Globe size={14} className={variant === 'dark' ? 'text-amber-400 shrink-0' : 'text-emerald-600 shrink-0'} />
+      <span className="text-[11px] font-bold flex items-center gap-1 pointer-events-none">
+        <span>{current.flag}</span>
+        <span className="font-extrabold">{current.label}</span>
+      </span>
+      <ChevronDown size={12} className={variant === 'dark' ? 'text-emerald-400 shrink-0 pointer-events-none' : 'text-slate-400 shrink-0 pointer-events-none'} />
+      <select
+        value={currentLang}
+        onChange={(e) => onSelect(e.target.value as Lang)}
+        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer text-xs"
+        aria-label="Select Language"
+      >
+        {SUPPORTED_LANGUAGES.map((langOption) => (
+          <option key={langOption.code} value={langOption.code} className="text-slate-900 bg-white py-1">
+            {langOption.flag} {langOption.label} ({langOption.name})
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+};
+
 export default function KisanQApp() {
-  const [lang, setLang] = useState<Lang>('EN');
+  const [lang, setLangState] = useState<Lang>(() => {
+    const saved = localStorage.getItem('kisanMobileLang') as Lang;
+    if (saved && SUPPORTED_LANGUAGES.some(sl => sl.code === saved)) {
+      return saved;
+    }
+    return 'EN';
+  });
+
+  const setLang = (newLang: Lang) => {
+    setLangState(newLang);
+    localStorage.setItem('kisanMobileLang', newLang);
+  };
   const [view, setView] = useState<View>('AUTH');
   const [authTab, setAuthTab] = useState<AuthTab>('LOGIN');
   const [currentTime, setCurrentTime] = useState<string>('');
@@ -461,24 +593,8 @@ export default function KisanQApp() {
             </div>
           </div>
 
-          {/* Language Switcher */}
-          <div className="flex bg-slate-200 rounded-lg p-0.5 text-xs font-bold shadow-inner">
-            <button 
-              onClick={() => setLang('EN')} 
-              className={`px-2 py-1 rounded transition ${lang === 'EN' ? 'bg-emerald-700 text-white shadow' : 'text-slate-600'}`}>
-              EN
-            </button>
-            <button 
-              onClick={() => setLang('HI')} 
-              className={`px-2 py-1 rounded transition ${lang === 'HI' ? 'bg-emerald-700 text-white shadow' : 'text-slate-600'}`}>
-              हिन्दी
-            </button>
-            <button 
-              onClick={() => setLang('PA')} 
-              className={`px-2 py-1 rounded transition ${lang === 'PA' ? 'bg-emerald-700 text-white shadow' : 'text-slate-600'}`}>
-              ਪੰਜਾਬੀ
-            </button>
-          </div>
+          {/* Language Dropdown Selector */}
+          <LanguageDropdown currentLang={lang} onSelect={setLang} variant="light" />
         </div>
 
         {/* Brand Banner with Image & Slogan */}
@@ -854,12 +970,8 @@ export default function KisanQApp() {
               <span className="text-amber-300 font-bold">{currentTime}</span>
             </div>
 
-            {/* Lang switcher */}
-            <div className="flex bg-emerald-950/90 rounded-lg p-0.5 text-[10px] font-bold border border-emerald-700">
-              <button onClick={() => setLang('EN')} className={`px-1.5 py-0.5 rounded ${lang === 'EN' ? 'bg-emerald-600 text-white' : 'text-slate-300'}`}>EN</button>
-              <button onClick={() => setLang('HI')} className={`px-1.5 py-0.5 rounded ${lang === 'HI' ? 'bg-emerald-600 text-white' : 'text-slate-300'}`}>HI</button>
-              <button onClick={() => setLang('PA')} className={`px-1.5 py-0.5 rounded ${lang === 'PA' ? 'bg-emerald-600 text-white' : 'text-slate-300'}`}>ਪੰਜਾਬੀ</button>
-            </div>
+            {/* Lang Dropdown */}
+            <LanguageDropdown currentLang={lang} onSelect={setLang} variant="dark" />
 
             {/* Demo Controller Bell */}
             <button 
@@ -1008,7 +1120,7 @@ export default function KisanQApp() {
               <div key={c.id} className="bg-slate-50 p-2.5 rounded-2xl border border-slate-200 text-center hover:border-emerald-400 transition shadow-sm">
                 <span className="text-xl">{c.icon}</span>
                 <p className="text-[11px] font-bold text-slate-900 truncate mt-1">
-                  {lang === 'PA' ? c.namePa.split(' ')[0] : lang === 'HI' ? c.nameHi : c.nameEn.split(' ')[0]}
+                  {getCropDisplayName(c, lang)}
                 </p>
                 <p className="text-xs font-black text-emerald-700">₹{c.msp.toLocaleString()}</p>
                 <span className="text-[9px] font-bold text-emerald-600">{c.change}</span>
@@ -1021,7 +1133,7 @@ export default function KisanQApp() {
         <h4 className="text-xs font-black uppercase text-slate-600 px-1 pt-1">
           {t("e-NAM Mandi Services", "ई-नाम मंडी सेवाएं", "ਈ-ਨਾਮ ਮੰਡੀ ਸੇਵਾਵਾਂ")}
         </h4>
-        <div class="grid grid-cols-3 gap-2.5">
+        <div className="grid grid-cols-3 gap-2.5">
           <button 
             onClick={() => setView('BOOKING')}
             className="bg-white p-3 rounded-2xl shadow-sm border border-slate-200 flex flex-col items-center gap-1.5 hover:border-emerald-500 hover:shadow-md transition group">
@@ -1283,7 +1395,7 @@ export default function KisanQApp() {
                   <div className="text-3xl mb-1">{crop.icon}</div>
                   <div>
                     <h4 className="font-bold text-xs text-slate-900 leading-tight">
-                      {lang === 'HI' ? crop.nameHi : lang === 'PA' ? crop.namePa : crop.nameEn}
+                      {getCropDisplayName(crop, lang)}
                     </h4>
                     <p className="text-sm font-black text-emerald-700 mt-1">₹{crop.msp.toLocaleString()}</p>
                     <span className="text-[10px] font-bold text-emerald-600">{crop.change}</span>
@@ -2073,21 +2185,26 @@ export default function KisanQApp() {
       </div>
 
       {/* Language Selection within Profile */}
-      <div className="bg-white rounded-3xl p-4 shadow-sm border border-slate-200 space-y-2.5">
-        <span className="text-xs font-black text-slate-900 uppercase block">
-          {t("App Language Preference", "ऐप भाषा प्राथमिकता", "ਐਪ ਭਾਸ਼ਾ ਦੀ ਚੋਣ")}
-        </span>
+      <div className="bg-white rounded-3xl p-4 shadow-sm border border-slate-200 space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-black text-slate-900 uppercase block">
+            {t("App Language Preference", "ऐप भाषा प्राथमिकता", "ਐਪ ਭਾਸ਼ਾ ਦੀ ਚੋਣ")}
+          </span>
+          <LanguageDropdown currentLang={lang} onSelect={setLang} variant="light" />
+        </div>
         <div className="grid grid-cols-3 gap-2">
-          {(['EN', 'HI', 'PA'] as Lang[]).map(l => (
+          {SUPPORTED_LANGUAGES.map(l => (
             <button
-              key={l}
-              onClick={() => setLang(l)}
-              className={`py-2 rounded-xl text-xs font-black border transition ${
-                lang === l 
+              key={l.code}
+              onClick={() => setLang(l.code)}
+              className={`py-2 px-1 rounded-xl text-center border transition flex flex-col items-center justify-center gap-0.5 ${
+                lang === l.code 
                   ? 'bg-emerald-700 text-white border-emerald-700 shadow-sm' 
                   : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
               }`}>
-              {l === 'EN' ? 'English' : l === 'HI' ? 'हिंदी' : 'ਪੰਜਾਬੀ'}
+              <span className="text-sm">{l.flag}</span>
+              <span className="text-[11px] font-black leading-tight">{l.label}</span>
+              <span className={`text-[9px] ${lang === l.code ? 'text-emerald-200' : 'text-slate-500'}`}>{l.name}</span>
             </button>
           ))}
         </div>
