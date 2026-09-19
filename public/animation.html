@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KISAN-Q • 2D Vector Animation Studio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800;900&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    body { background: #020617; font-family: 'Plus Jakarta Sans', sans-serif; color: #f8fafc; overflow: hidden; margin: 0; }
+    #canvas-wrap { aspect-ratio: 16 / 9; max-height: 92vh; width: 100vw; display: flex; align-items: center; justify-content: center; position: relative; }
+    canvas { width: 100%; height: 100%; object-fit: contain; background: #030712; }
+  </style>
+</head>
+<body class="flex flex-col items-center justify-between h-screen p-2">
+
+  <!-- Top Bar -->
+  <header class="w-full max-w-7xl flex items-center justify-between px-4 py-1.5 z-20">
+    <div class="flex items-center gap-2">
+      <div class="w-7 h-7 rounded-lg bg-emerald-500 text-slate-950 font-black flex items-center justify-center text-xs">KQ</div>
+      <span class="font-black text-xs text-white uppercase tracking-wider">KISAN-Q 2D Vector Animation Studio</span>
+      <span class="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9px] px-1.5 py-0.5 rounded font-mono">1920x1080 60FPS</span>
+    </div>
+    <div class="flex items-center gap-3 text-xs font-mono text-emerald-400">
+      <span id="timecode">00:00 / 01:00</span>
+      <button id="btnPlay" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black rounded-md transition">PLAY</button>
+    </div>
+  </header>
+
+  <!-- Canvas Stage -->
+  <div id="canvas-wrap">
+    <canvas id="animCanvas" width="1920" height="1080"></canvas>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('animCanvas');
+    const ctx = canvas.getContext('2d');
+    const timecodeEl = document.getElementById('timecode');
+    const btnPlay = document.getElementById('btnPlay');
+
+    const TOTAL_DURATION = 60; // 60-second high-energy animation
+    let currentTime = 0;
+    let isPlaying = true;
+    let lastTime = null;
+
+    // --- PROCEDURAL ANIMATION ASSETS & PARTICLES ---
+    const rainDrops = Array.from({ length: 90 }, () => ({
+      x: Math.random() * 1920,
+      y: Math.random() * 1080,
+      speed: Math.random() * 15 + 20,
+      len: Math.random() * 20 + 15
+    }));
+
+    const grainParticles = Array.from({ length: 120 }, () => ({
+      x: 960 + (Math.random() - 0.5) * 40,
+      y: Math.random() * 400 + 350,
+      speedY: Math.random() * 8 + 12,
+      radius: Math.random() * 3 + 2,
+      color: Math.random() > 0.3 ? '#facc15' : '#eab308'
+    }));
+
+    const coins = Array.from({ length: 45 }, (_, i) => ({
+      x: 960,
+      y: 540,
+      vx: (Math.random() - 0.5) * 22,
+      vy: (Math.random() - 0.5) * 22 - 6,
+      rot: Math.random() * Math.PI,
+      rotSpeed: (Math.random() - 0.5) * 0.2,
+      scale: Math.random() * 0.5 + 0.8
+    }));
+
+    // --- DRAWING HELPERS ---
+    function drawTractor(x, y, scale = 1, wheelAngle = 0, hasWheat = true) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(scale, scale);
+
+      // Shadow
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.beginPath();
+      ctx.ellipse(80, 100, 180, 20, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // --- TROLLEY (BEHIND TRACTOR) ---
+      // Trolley body (Blue metal)
+      ctx.fillStyle = '#1e3a8a';
+      ctx.fillRect(-160, -20, 150, 70);
+      ctx.fillStyle = '#172554';
+      ctx.fillRect(-160, 40, 150, 10);
+      // Trolley ribs
+      ctx.fillStyle = '#3b82f6';
+      for (let i = -150; i < -10; i += 25) {
+        ctx.fillRect(i, -20, 4, 70);
+      }
+
+      // Wheat Mound
+      if (hasWheat) {
+        ctx.fillStyle = '#eab308';
+        ctx.beginPath();
+        ctx.arc(-110, -20, 45, Math.PI, 0);
+        ctx.arc(-50, -20, 40, Math.PI, 0);
+        ctx.fill();
+        // Wheat texture dots
+        ctx.fillStyle = '#ca8a04';
+        for (let w = 0; w < 20; w++) {
+          ctx.fillRect(-140 + Math.random() * 120, -50 + Math.random() * 30, 3, 3);
+        }
+      }
+
+      // Trolley Wheels (Double wheel)
+      drawWheel(-120, 65, 34, wheelAngle);
+      drawWheel(-50, 65, 34, wheelAngle);
+
+      // Hitch bar connecting to tractor
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(-20, 35, 35, 12);
+
+      // --- TRACTOR UNIT (CLASSIC INDIAN GREEN/YELLOW SWARAJ STYLE) ---
+      // Hood (Green)
+      ctx.fillStyle = '#059669';
+      ctx.beginPath();
+      ctx.roundRect(15, -10, 110, 55, [10, 20, 5, 5]);
+      ctx.fill();
+
+      // Yellow racing stripe
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(20, 12, 100, 8);
+
+      // Engine block / Grille (Black)
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(100, -5, 22, 45);
+      ctx.fillStyle = '#94a3b8';
+      for (let g = 0; g < 4; g++) ctx.fillRect(104, 5 + g * 8, 14, 3);
+
+      // Headlight (Glowing Yellow)
+      ctx.fillStyle = '#fef08a';
+      ctx.beginPath();
+      ctx.arc(122, 2, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowColor = '#facc15';
+      ctx.shadowBlur = 20;
+      ctx.fillStyle = 'rgba(250, 204, 21, 0.4)';
+      ctx.beginPath();
+      ctx.moveTo(122, 2);
+      ctx.lineTo(260, -40);
+      ctx.lineTo(260, 60);
+      ctx.closePath();
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // Exhaust Pipe
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(55, -60, 10, 55);
+      ctx.fillRect(52, -65, 16, 6);
+
+      // Driver Seat & Steering
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(20, -25, 20, 25);
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(40, -32, 6, 25);
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.ellipse(43, -34, 14, 4, 0.3, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Farmer Driver (Turban / Kurta)
+      ctx.fillStyle = '#ea580c'; // Saffron Turban
+      ctx.beginPath();
+      ctx.arc(28, -50, 14, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fed7aa'; // Face
+      ctx.beginPath();
+      ctx.arc(31, -44, 9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff'; // Kurta
+      ctx.fillRect(18, -35, 22, 25);
+
+      // Mudguard over big rear wheel
+      ctx.fillStyle = '#047857';
+      ctx.beginPath();
+      ctx.arc(25, 35, 55, Math.PI * 1.1, Math.PI * 1.9);
+      ctx.lineWidth = 14;
+      ctx.stroke();
+
+      // Big Rear Wheel
+      drawWheel(25, 45, 48, wheelAngle, true);
+
+      // Front Small Wheel
+      drawWheel(110, 55, 28, wheelAngle);
+
+      ctx.restore();
+    }
+
+    function drawWheel(x, y, radius, angle, isRear = false) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+
+      // Outer Tire
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(0, 0, radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Deep tractor treads
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = radius * 0.18;
+      ctx.stroke();
+
+      // Rim (Yellow)
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath();
+      ctx.arc(0, 0, radius * 0.6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Hub nuts
+      ctx.fillStyle = '#b45309';
+      for (let s = 0; s < 6; s++) {
+        const sa = (s / 6) * Math.PI * 2;
+        ctx.fillRect(Math.cos(sa) * radius * 0.35 - 3, Math.sin(sa) * radius * 0.35 - 3, 6, 6);
+      }
+      ctx.fillStyle = '#1e293b';
+      ctx.beginPath();
+      ctx.arc(0, 0, radius * 0.22, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    // --- SCENE 1: THE HIGHWAY CRISIS & RAIN (0s - 12s) ---
+    function renderScene1(t) {
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, 1080);
+      skyGrad.addColorStop(0, '#0f172a');
+      skyGrad.addColorStop(0.5, '#1e293b');
+      skyGrad.addColorStop(1, '#090d16');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, 1920, 1080);
+
+      // Storm Cloud
+      ctx.fillStyle = '#334155';
+      ctx.beginPath();
+      ctx.arc(450, 180, 120, 0, Math.PI * 2);
+      ctx.arc(600, 140, 150, 0, Math.PI * 2);
+      ctx.arc(760, 180, 130, 0, Math.PI * 2);
+      ctx.arc(920, 160, 140, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Rain animation
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.5)';
+      ctx.lineWidth = 2;
+      rainDrops.forEach(r => {
+        r.y += r.speed;
+        if (r.y > 1080) { r.y = 100; r.x = Math.random() * 1920; }
+        ctx.beginPath();
+        ctx.moveTo(r.x, r.y);
+        ctx.lineTo(r.x - 4, r.y + r.len);
+        ctx.stroke();
+      });
+
+      // Road
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(0, 720, 1920, 360);
+      ctx.fillStyle = '#e2e8f0';
+      const dashOffset = (t * 400) % 160;
+      for (let x = -dashOffset; x < 1920; x += 160) {
+        ctx.fillRect(x, 890, 80, 12);
+      }
+
+      // Three Queued Tractors in a Jam
+      const wheelRot = t * 4;
+      drawTractor(320, 680, 1.1, wheelRot);
+      drawTractor(820, 680, 1.1, wheelRot);
+      drawTractor(1320, 680, 1.1, wheelRot);
+
+      // Warning Barrier
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.moveTo(1750, 680);
+      ctx.lineTo(1720, 780);
+      ctx.lineTo(1780, 780);
+      ctx.fill();
+
+      // Typography
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '900 76px "Plus Jakarta Sans"';
+      ctx.fillText('72-HOUR MANDI TRAFFIC JAM', 100, 340);
+
+      ctx.fillStyle = '#ef4444';
+      ctx.font = '900 48px "Plus Jakarta Sans"';
+      ctx.fillText('⚠️ NO SCHEDULING • HARVEST IN OPEN RAIN', 100, 410);
+
+      // Floating Clock Graphic
+      ctx.save();
+      ctx.translate(1600, 240);
+      ctx.fillStyle = '#1e293b';
+      ctx.beginPath();
+      ctx.arc(0, 0, 90, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 8;
+      ctx.stroke();
+      const clockAngle = t * 5;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.cos(clockAngle) * 55, Math.sin(clockAngle) * 55);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // --- SCENE 2: KISAN-Q SMART GATE & 0.8S SCAN (12s - 25s) ---
+    function renderScene2(t) {
+      const p = (t - 12) / 13;
+
+      const bg = ctx.createLinearGradient(0, 0, 0, 1080);
+      bg.addColorStop(0, '#064e3b');
+      bg.addColorStop(0.6, '#022c22');
+      bg.addColorStop(1, '#0f172a');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, 1920, 1080);
+
+      // Concrete Mandi Gate Structure
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(1150, 200, 60, 600);
+      ctx.fillRect(1650, 200, 60, 600);
+      ctx.fillStyle = '#065f46';
+      ctx.fillRect(1100, 160, 660, 70);
+
+      ctx.fillStyle = '#facc15';
+      ctx.font = '900 32px "Plus Jakarta Sans"';
+      ctx.fillText('e-NAM SMART GATE 1 • APMC KHANNA', 1130, 210);
+
+      // Automated Boom Barrier (Swings up)
+      const barrierAngle = Math.min(Math.PI / 2, Math.max(0, (p - 0.3) * 3));
+      ctx.save();
+      ctx.translate(1180, 620);
+      ctx.rotate(-barrierAngle);
+      for (let b = 0; b < 340; b += 40) {
+        ctx.fillStyle = (b / 40) % 2 === 0 ? '#ef4444' : '#ffffff';
+        ctx.fillRect(b, -8, 40, 16);
+      }
+      ctx.restore();
+
+      // Road
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(0, 720, 1920, 360);
+
+      // Tractor driving smoothly through gate
+      const tractorX = 150 + p * 1200;
+      drawTractor(tractorX, 680, 1.1, t * 10);
+
+      // Laser Scanner Beam
+      if (p > 0.2 && p < 0.8) {
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 4;
+        ctx.shadowColor = '#34d399';
+        ctx.shadowBlur = 25;
+        ctx.beginPath();
+        const laserX = tractorX + 60;
+        ctx.moveTo(laserX, 230);
+        ctx.lineTo(laserX - 60, 680);
+        ctx.lineTo(laserX + 60, 680);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        ctx.fillStyle = '#064e3b';
+        ctx.strokeStyle = '#34d399';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(tractorX - 40, 480, 220, 70, 12);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#34d399';
+        ctx.font = '900 18px "JetBrains Mono"';
+        ctx.fillText('TOKEN #KQ-1049', tractorX - 20, 510);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '700 14px "Plus Jakarta Sans"';
+        ctx.fillText('✓ VERIFIED (0.8s)', tractorX - 20, 532);
+      }
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '900 68px "Plus Jakarta Sans"';
+      ctx.fillText('INSTANT DIGITAL GATE ENTRY', 100, 320);
+
+      ctx.fillStyle = '#34d399';
+      ctx.font = '800 36px "Plus Jakarta Sans"';
+      ctx.fillText('RFID & QR Automation • Zero Bribes • Express Smallholder Lane', 100, 380);
+    }
+
+    // --- SCENE 3: AUTOMATED WEIGHBRIDGE & FCI LAB (25s - 40s) ---
+    function renderScene3(t) {
+      const p = (t - 25) / 15;
+
+      ctx.fillStyle = '#030712';
+      ctx.fillRect(0, 0, 1920, 1080);
+
+      // Left Panel: Electronic Weighbridge
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.roundRect(80, 180, 850, 750, 24);
+      ctx.fill();
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '900 36px "Plus Jakarta Sans"';
+      ctx.fillText('CERTIFIED IOT WEIGHBRIDGE', 120, 250);
+
+      drawTractor(460, 680, 0.95, 0);
+
+      ctx.fillStyle = '#020617';
+      ctx.fillRect(120, 290, 770, 120);
+      ctx.strokeStyle = '#334155';
+      ctx.strokeRect(120, 290, 770, 120);
+
+      const gross = (14.20 * Math.min(1, p * 2)).toFixed(2);
+      ctx.fillStyle = '#22c55e';
+      ctx.font = '900 72px "JetBrains Mono"';
+      ctx.fillText(`GROSS: ${gross} MT`, 160, 380);
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '700 22px "JetBrains Mono"';
+      ctx.fillText('TARE: 4.20 MT  |  NET GRAIN: 10.00 MT', 160, 470);
+
+      // Right Panel: NABL Quality Lab
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.roundRect(990, 180, 850, 750, 24);
+      ctx.fill();
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '900 36px "Plus Jakarta Sans"';
+      ctx.fillText('NABL MOISTURE & QUALITY LAB', 1030, 250);
+
+      // Moisture Gauge
+      ctx.save();
+      ctx.translate(1415, 520);
+      ctx.beginPath();
+      ctx.arc(0, 0, 170, Math.PI * 0.8, Math.PI * 2.2);
+      ctx.lineWidth = 26;
+      ctx.strokeStyle = '#334155';
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(0, 0, 170, Math.PI * 0.8, Math.PI * 1.5);
+      ctx.strokeStyle = '#10b981';
+      ctx.stroke();
+
+      const needleAngle = Math.PI * 0.8 + Math.min(1, p * 1.5) * (Math.PI * 0.55);
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.cos(needleAngle) * 140, Math.sin(needleAngle) * 140);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.fillStyle = '#fef08a';
+      ctx.font = '900 64px "JetBrains Mono"';
+      ctx.fillText('11.4% MOISTURE', 1190, 780);
+      ctx.fillStyle = '#10b981';
+      ctx.font = '800 28px "Plus Jakarta Sans"';
+      ctx.fillText('✓ PASSED FCI STANDARD (≤12% FULL MSP)', 1130, 840);
+    }
+
+    // --- SCENE 4: GRAIN UNLOADING & DOPPLER RAIN SHIELD (40s - 50s) ---
+    function renderScene4(t) {
+      ctx.fillStyle = '#090d16';
+      ctx.fillRect(0, 0, 1920, 1080);
+
+      // Steel Grain Silo
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(1100, 250, 480, 650);
+      ctx.beginPath();
+      ctx.arc(1340, 250, 240, Math.PI, 0);
+      ctx.fill();
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 4;
+      for (let s = 320; s < 880; s += 70) {
+        ctx.beginPath();
+        ctx.moveTo(1100, s);
+        ctx.lineTo(1580, s);
+        ctx.stroke();
+      }
+
+      // Pouring grain stream
+      ctx.fillStyle = '#eab308';
+      ctx.fillRect(940, 400, 40, 450);
+      grainParticles.forEach(gp => {
+        gp.y += gp.speedY;
+        if (gp.y > 850) gp.y = 400;
+        ctx.fillStyle = gp.color;
+        ctx.beginPath();
+        ctx.arc(gp.x, gp.y, gp.radius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Doppler Radar Dish on Tower
+      ctx.save();
+      ctx.translate(450, 420);
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(-20, 0, 40, 350);
+      const dishAngle = Math.sin(t * 3) * 0.4;
+      ctx.rotate(dishAngle);
+      ctx.fillStyle = '#0284c7';
+      ctx.beginPath();
+      ctx.arc(0, 0, 90, Math.PI * 0.6, Math.PI * 1.4);
+      ctx.lineWidth = 16;
+      ctx.strokeStyle = '#38bdf8';
+      ctx.stroke();
+      for (let ring = 1; ring <= 3; ring++) {
+        const ringRad = ((t * 80 + ring * 60) % 220);
+        ctx.strokeStyle = `rgba(56, 189, 248, ${1 - ringRad / 220})`;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(-50, 0, ringRad, Math.PI * 0.7, Math.PI * 1.3);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '900 64px "Plus Jakarta Sans"';
+      ctx.fillText('DOPPLER RADAR WEATHER SHIELD', 100, 160);
+
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = '800 32px "Plus Jakarta Sans"';
+      ctx.fillText('Automated diversion to Covered Silo Complex prevents rain damage', 100, 220);
+    }
+
+    // --- SCENE 5: DBT DIRECT PAYMENT & CELEBRATION (50s - 60s) ---
+    function renderScene5(t) {
+      const bg = ctx.createRadialGradient(960, 540, 100, 960, 540, 1100);
+      bg.addColorStop(0, '#065f46');
+      bg.addColorStop(0.5, '#022c22');
+      bg.addColorStop(1, '#020617');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, 1920, 1080);
+
+      // Gold Coin Explosion
+      coins.forEach(c => {
+        c.x += c.vx;
+        c.y += c.vy;
+        c.vy += 0.4;
+        c.rot += c.rotSpeed;
+
+        if (c.y > 1000) { c.y = 540; c.x = 960; c.vy = (Math.random() - 0.5) * 22 - 6; }
+
+        ctx.save();
+        ctx.translate(c.x, c.y);
+        ctx.rotate(c.rot);
+        ctx.scale(c.scale, c.scale);
+        ctx.fillStyle = '#eab308';
+        ctx.beginPath();
+        ctx.arc(0, 0, 26, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#fef08a';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.fillStyle = '#713f12';
+        ctx.font = '900 24px "JetBrains Mono"';
+        ctx.fillText('₹', -7, 8);
+        ctx.restore();
+      });
+
+      // Bank Notification Card
+      ctx.fillStyle = '#020617';
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 4;
+      ctx.shadowColor = '#10b981';
+      ctx.shadowBlur = 40;
+      ctx.beginPath();
+      ctx.roundRect(560, 300, 800, 480, 36);
+      ctx.fill();
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      ctx.fillStyle = '#10b981';
+      ctx.beginPath();
+      ctx.arc(960, 400, 55, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#020617';
+      ctx.font = '900 52px "Plus Jakarta Sans"';
+      ctx.fillText('✓', 944, 418);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '900 54px "JetBrains Mono"';
+      ctx.textAlign = 'center';
+      ctx.fillText('₹22,750.00 CREDITED', 960, 520);
+
+      ctx.fillStyle = '#34d399';
+      ctx.font = '800 26px "Plus Jakarta Sans"';
+      ctx.fillText('PFMS DIRECT BENEFIT TRANSFER (DBT)', 960, 570);
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '600 20px "Plus Jakarta Sans"';
+      ctx.fillText('Farmer: Gurpreet Singh • A/C ****4432 (Punjab National Bank)', 960, 620);
+      ctx.fillText('Turnaround Time: 42 Mins (Was 72 Hours)', 960, 660);
+      ctx.textAlign = 'left';
+
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = '900 38px "Plus Jakarta Sans"';
+      ctx.textAlign = 'center';
+      ctx.fillText('KISAN-Q • FAIR SHARE MANDI PROCUREMENT SYSTEM', 960, 920);
+      ctx.textAlign = 'left';
+    }
+
+    // --- CONTROLLER ---
+    function animate(timestamp) {
+      if (!lastTime) lastTime = timestamp;
+      const delta = (timestamp - lastTime) / 1000;
+      lastTime = timestamp;
+
+      if (isPlaying) {
+        currentTime += delta;
+        if (currentTime >= TOTAL_DURATION) currentTime = 0;
+      }
+
+      if (currentTime < 12) renderScene1(currentTime);
+      else if (currentTime < 25) renderScene2(currentTime);
+      else if (currentTime < 40) renderScene3(currentTime);
+      else if (currentTime < 50) renderScene4(currentTime);
+      else renderScene5(currentTime);
+
+      const m = Math.floor(currentTime / 60);
+      const s = Math.floor(currentTime % 60);
+      timecodeEl.innerText = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')} / 01:00`;
+
+      requestAnimationFrame(animate);
+    }
+
+    btnPlay.addEventListener('click', () => {
+      isPlaying = !isPlaying;
+      btnPlay.innerText = isPlaying ? 'PAUSE' : 'PLAY';
+    });
+
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>
